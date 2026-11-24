@@ -17,7 +17,9 @@ Without Redis env vars, accounts and usage counters are kept in memory and reset
 1. Import this repo in Vercel (framework preset: **Other**, no build command).
 2. **Storage → Upstash Redis → connect to this project.** Accounts and usage limits are stored there.
 3. **Settings → Environment Variables:** `ANTHROPIC_API_KEY` (required), and optionally
-   `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` for Gmail import. Redeploy.
+   `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` for "Continue with Google" and Gmail import. Redeploy.
+   In Google Cloud, the OAuth client needs both redirect URIs: `/auth/google/login` (sign-in) and
+   `/auth/google/callback` (Gmail).
 4. **Settings → Domains:** add `ecoaudit.miles-ehrlich.com`.
 
 `vercel.json` sends `/api/*` and `/auth/*` to one function (`api/index.js` → `lib/handler.js`);
