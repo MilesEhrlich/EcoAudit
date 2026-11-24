@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+  /* Sends signed-out visitors to the landing page, and handles the server's
+     "sign in again" (401) and "usage limit reached" (429) answers for AI requests. */
+  (function () {
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem('ecoaudit_user')); } catch (e) {}
+    if (!user || !user.email) { location.replace('landing.html'); return; }
+
+    var origFetch = window.fetch.bind(window);
+    var toastUp = false;
+    function notice(msg) {
+      if (toastUp) return;
+      toastUp = true;
+      var el = document.createElement('div');
+      el.setAttribute('role', 'status');
+      el.textContent = msg || "You've reached today's AI limit. Try again tomorrow.";
+      el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;' +
+        'max-width:min(92vw,440px);padding:12px 18px;border-radius:12px;background:#1b4332;color:#fff;' +
+        'font:500 14px/1.4 system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center';
+      document.body.appendChild(el);
+      setTimeout(function () { el.remove(); toastUp = false; }, 6000);
+    }
+    window.fetch = function (input, init) {
+      return origFetch(input, init).then(function (res) {
+        var url = typeof input === 'string' ? input : (input && input.url) || '';
+        if (url.indexOf('/api/claude') !== -1) {
+          if (res.status === 401) {
+            try { localStorage.removeItem('ecoaudit_user'); } catch (e) {}
+            location.href = 'landing.html';
+          } else if (res.status === 429) {
+            res.clone().json()
+              .then(function (j) { notice(j && j.error && j.error.message); })
+              .catch(function () { notice(); });
+          }
+        }
+        return res;
+      });
+    };
+  })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoAudit — Sustainability Impact Dashboard</title>
+  <link rel="icon" href="koala-logo.png" type="image/png" />
+  <link rel="apple-touch-icon" href="koala-logo.png" />
+  <link rel="stylesheet" href="styles.css?v=37" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js" crossorigin=""></script>
+</head>
+<body>
+
+<!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
+<main class="main-content">
+
+  <header class="topbar topbar--full">
+    <div class="topbar-row">
+      <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <a href="#" class="topbar-logo" data-page="dashboard" aria-label="EcoAudit home">
+        <span class="logo-icon">
+          <img src="koala-logo.png" alt="EcoAudit" class="topbar-logo-img" width="36" height="36" />
+        </span>
+        <span class="logo-text">EcoAudit</span>
+      </a>
+
+      <div class="topbar-nav-wrap" id="topbarNavWrap">
+      <nav class="topbar-nav" id="topbarNav" aria-label="Main">
+        <a href="#" class="nav-item active" data-page="dashboard">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Dashboard
+        </a>
+        <a href="#" class="nav-item" data-page="track">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Upload Products
+        </a>
+        <a href="#" class="nav-item" data-page="library">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+          Products
+        </a>
+        <a href="#" class="nav-item" data-page="map">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Map
+        </a>
+        <a href="#" class="nav-item" data-page="brands">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          Brands
+        </a>
+      </nav>
+      </div>
+
+      <div class="topbar-eco-pill" aria-live="polite">
+        <span class="eco-label">Eco score</span>
+        <span class="eco-value"><span id="sidebarEcoScore">0</span><span class="eco-unit">/100</span></span>
+      </div>
+
+      <div class="topbar-right">
+      <div class="profile-wrap">
+        <div class="avatar" id="avatarBtn">KG</div>
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="profile-dropdown-header">
+            <div class="profile-dropdown-avatar" id="profileAvatar">KG</div>
+            <div class="profile-dropdown-info">
+              <div class="profile-dropdown-name" id="profileName">Test User</div>
+              <div class="profile-dropdown-email" id="profileEmail">test@example.com</div>
+            </div>
+          </div>
+          <div class="profile-dropdown-stats">
+            <div class="profile-stat"><span class="profile-stat-val" id="pStatScore">0</span><span class="profile-stat-label">Eco Score</span></div>
+            <div class="profile-stat"><span class="profile-stat-val" id="pStatAudits">0</span><span class="profile-stat-label">Audits</span></div>
+            <div class="profile-stat"><span class="profile-stat-val" id="pStatCO2">0 kg</span><span class="profile-stat-label">CO₂ Used</span></div>
+          </div>
+          <div class="profile-dropdown-menu">
+            <a href="#" class="profile-menu-item" data-action="profile">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              My Profile
+            </a>
+            <a href="#" class="profile-menu-item" data-action="settings">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              Settings
+            </a>
+            <div class="profile-menu-divider"></div>
+            <a href="#" class="profile-menu-item signout" id="signOutBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Sign Out
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </header>
+
+  <!-- ─────────── PAGE: DASHBOARD ─────────── -->
+  <section class="page active" id="page-dashboard">
+
+    <!-- HERO BANNER -->
+    <div class="hero-banner">
+      <div class="hero-banner-top">
+        <div class="hero-text">
+          <h1>Good morning, Test <span class="wave">🌿</span></h1>
+          <p id="heroSubtext">Start scanning brands and uploading receipts to track your impact!</p>
+        </div>
+        <div class="hero-badge">
+          <div class="badge-ring">
+            <svg class="progress-ring" width="110" height="110">
+              <circle class="ring-bg" cx="55" cy="55" r="46" />
+              <circle class="ring-fill" cx="55" cy="55" r="46" stroke-dasharray="289" stroke-dashoffset="289" id="ecoRingFill" />
+            </svg>
+            <div class="badge-center">
+              <span class="badge-num" id="heroBadgeNum">0</span>
+              <span class="badge-label">ECO SCORE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="hero-explain-btn" id="heroExplainBtn" aria-expanded="false" aria-controls="heroExplainPanel">
+        <span>Explain my score</span>
+        <svg class="hero-explain-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="hero-explain-panel" id="heroExplainPanel" hidden>
+        <div id="heroExplainContent" class="hero-explain-content"></div>
+      </div>
+    </div>
+
+    <!-- Tracked products impact (from purchase library) -->
+    <div class="fp-metrics-row fp-metrics-row--dashboard">
+      <div class="fp-metric-card fp-metric--primary fp-metric-card--action" data-dashboard-action="library">
+        <div class="fp-metric-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="fp-metric-inner">
+          <div class="fp-value" id="fpProducts">0</div>
+          <div class="fp-label">Products Tracked</div>
+        </div>
+        <div class="fp-compare" id="fpProductsCmp">Add purchases to start</div>
+        <button type="button" class="fp-metric-btn" id="fpBtnLibrary">Open products</button>
+      </div>
+      <div class="fp-metric-card fp-metric--primary fp-metric-card--action" data-dashboard-action="map">
+        <div class="fp-metric-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="fp-metric-inner">
+          <div class="fp-value" id="fpShipping">0 kg</div>
+          <div class="fp-label">Shipping CO₂e</div>
+        </div>
+        <div class="fp-equiv" id="fpShipEquiv"></div>
+        <div class="fp-compare" id="fpShippingCmp">Estimated from origin to your location</div>
+        <button type="button" class="fp-metric-btn" id="fpBtnMapShipping">View map</button>
+      </div>
+      <div class="fp-metric-card fp-metric--primary fp-metric-card--action">
+        <div class="fp-metric-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M12 9v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="17" r="1.25" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="fp-metric-inner">
+          <div class="fp-value" id="fpGreenwash">0</div>
+          <div class="fp-label">Greenwash alerts</div>
+        </div>
+        <div class="fp-compare" id="fpGreenwashCmp">From AI analysis of your products</div>
+        <button type="button" class="fp-metric-btn" id="fpBtnGreenwashExplain">What this means</button>
+      </div>
+      <div class="fp-metric-card fp-metric--primary fp-metric-card--action" data-dashboard-action="map">
+        <div class="fp-metric-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="fp-metric-inner">
+          <div class="fp-value" id="fpCountries">0</div>
+          <div class="fp-label">Countries Sourced From</div>
+        </div>
+        <div class="fp-compare" id="fpCountriesCmp">Upload Products to see origins</div>
+        <button type="button" class="fp-metric-btn" id="fpBtnMapCountries">View map</button>
+      </div>
+    </div>
+
+    <!-- ECO TIPS CAROUSEL -->
+    <div class="ecotips-header-row">
+      <span class="ecotips-header-label">Eco Tips</span>
+    </div>
+    <div class="ecotips" id="ecoTips" role="region" aria-roledescription="carousel" aria-label="Sustainable shopping tips">
+      <div class="ecotips-body">
+        <button class="ecotips-arrow ecotips-arrow--prev" id="ecoTipsPrev" aria-label="Previous tip" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="ecotips-track-wrap">
+          <div class="ecotips-track" id="ecoTipsTrack" aria-live="off">
+            <!-- Slides rendered by JS -->
+          </div>
+        </div>
+        <button class="ecotips-arrow ecotips-arrow--next" id="ecoTipsNext" aria-label="Next tip" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+      </div>
+      <div class="ecotips-dots" id="ecoTipsDots" role="tablist" aria-label="Tip navigation"></div>
+      <div class="ecotips-empty" id="ecoTipsEmpty" style="display:none">
+        <span>No tips available right now.</span>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="charts-row">
+      <!-- Footprint Over Time -->
+      <div class="chart-card wide">
+        <div class="chart-header">
+          <h3>Carbon Footprint Over Time</h3>
+          <div class="chart-tabs">
+            <button class="chart-tab active">6M</button>
+            <button class="chart-tab">1Y</button>
+            <button class="chart-tab">All</button>
+          </div>
+        </div>
+        <div class="chart-area" id="footprintChart" style="position:relative">
+          <svg viewBox="0 0 560 180" preserveAspectRatio="none" width="100%" height="180">
+            <defs>
+              <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#52B788" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="#52B788" stop-opacity="0.02"/>
+              </linearGradient>
+            </defs>
+            <line x1="0" y1="40" x2="560" y2="40" stroke="#e8f5e9" stroke-width="1"/>
+            <line x1="0" y1="80" x2="560" y2="80" stroke="#e8f5e9" stroke-width="1"/>
+            <line x1="0" y1="120" x2="560" y2="120" stroke="#e8f5e9" stroke-width="1"/>
+            <line x1="0" y1="160" x2="560" y2="160" stroke="#e8f5e9" stroke-width="1"/>
+            <path id="chartAreaPath" d="M0,180 L560,180 L560,180 L0,180 Z" fill="url(#areaGrad)"/>
+            <path id="chartLinePath" d="M0,180 L560,180" fill="none" stroke="#2D6A4F" stroke-width="2.5" stroke-linecap="round"/>
+            <g id="chartDots"></g>
+          </svg>
+          <div class="chart-labels">
+            <span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span>
+          </div>
+          <div id="chartEmpty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ADADAD;font-size:13px;">Scan brands to see your footprint trend</div>
+        </div>
+      </div>
+
+      <!-- Category Breakdown -->
+      <div class="chart-card narrow">
+        <div class="chart-header">
+          <h3>By Category</h3>
+        </div>
+        <div class="donut-wrap" id="donutWrap">
+          <svg viewBox="0 0 120 120" width="120" height="120" id="donutSvg" aria-label="Products by category">
+            <g id="donutArcGroup" transform="rotate(-90 60 60)"></g>
+            <text x="60" y="57" text-anchor="middle" font-size="12" fill="#2D6A4F" font-weight="600" font-family="Inter, sans-serif" id="donutCount">0</text>
+            <text x="60" y="69" text-anchor="middle" font-size="7" fill="#74A57F" font-family="Inter, sans-serif">products</text>
+          </svg>
+          <div class="legend" id="donutLegend">
+            <div style="color:#ADADAD;font-size:12px;text-align:center;">No data yet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  </section>
+
+  <!-- ─────────── PAGE: PRODUCT ORIGINS MAP ─────────── -->
+  <section class="page" id="page-map">
+    <div class="map-layout">
+      <div class="map-sidebar">
+        <div class="origin-sidebar-header">
+          <h4>Countries</h4>
+          <span class="origin-total-label" id="originTotalLabel">0 products tracked</span>
+        </div>
+
+        <div class="origin-country-list" id="originCountryList">
+          <div class="origin-sidebar-empty" id="originSidebarEmpty">
+            No purchase origins yet. Upload receipts or import emails to start tracking where your products come from.
+          </div>
+        </div>
+
+        <div class="origin-shipping-summary" id="originShippingSummary">
+          <div class="origin-summary-row">
+            <span class="origin-summary-label">Total shipping CO₂e</span>
+            <span class="origin-summary-val" id="originShipTotal">0 kg</span>
+          </div>
+          <div class="origin-summary-row">
+            <span class="origin-summary-label">Avg. distance</span>
+            <span class="origin-summary-val" id="originAvgDist">—</span>
+          </div>
+        </div>
+
+        <label class="origin-toggle-label">
+          <input type="checkbox" id="showShippingRoutes" checked />
+          Show shipping routes
+        </label>
+      </div>
+
+      <div class="map-container">
+        <div id="leaflet-map"></div>
+        <button class="locate-btn" id="locateBtn">Use My Location</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── PAGE: BRAND SCORES ─────────── -->
+  <section class="page" id="page-brands">
+    <div class="brand-search-row">
+      <div class="brand-search-wrap">
+        <input type="text" class="brand-search-input" placeholder="Search for brands..." id="brandFilter" autocomplete="off" />
+        <button class="brand-search-btn" id="brandSearchBtn" title="Search with AI">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <div class="brand-autocomplete" id="brandAutocomplete"></div>
+      </div>
+      <select class="brand-category-select">
+        <option>All Categories</option>
+        <option>Fashion</option>
+        <option>Electronics</option>
+        <option>Food & Beverage</option>
+        <option>Beauty</option>
+        <option>Home Goods</option>
+      </select>
+      <select class="brand-sort-select" id="brandSort">
+        <option value="">Sort by…</option>
+        <option value="name-asc">Name A–Z</option>
+        <option value="name-desc">Name Z–A</option>
+        <option value="grade-asc">Best Grade First</option>
+        <option value="grade-desc">Worst Grade First</option>
+        <option value="carbon-desc">Carbon ↑</option>
+        <option value="labour-desc">Labour ↑</option>
+        <option value="materials-desc">Materials ↑</option>
+        <option value="gw-first">Greenwashing First</option>
+      </select>
+    </div>
+
+    <div class="brands-table-wrap">
+      <table class="brands-table">
+        <thead>
+          <tr>
+            <th>Brand</th>
+            <th>Category</th>
+            <th>Overall</th>
+            <th>Carbon</th>
+            <th>Labour</th>
+            <th>Materials</th>
+            <th>Certifications / Ratings</th>
+            <th>Greenwashing</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr data-brand="patagonia" data-gw="none" data-gw-text="">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/patagonia.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo p" style="display:none">P</div>Patagonia</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-a">A</span></td>
+            <td>84%</td><td>78%</td><td>92%</td>
+            <td><span class="cert">B Corp 151.4</span><span class="cert">bluesign®</span><span class="cert">SBTi</span></td>
+            <td class="gw-cell"><span class="gw-clean">✓ Clean</span></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="eileenfisher" data-gw="none" data-gw-text="">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/eileenfisher.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo e" style="display:none">E</div>Eileen Fisher</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-a">A-</span></td>
+            <td>82%</td><td>76%</td><td>85%</td>
+            <td><span class="cert">B Corp 109.4</span><span class="cert">GOTS</span><span class="cert">Fair Trade</span></td>
+            <td class="gw-cell"><span class="gw-clean">✓ Clean</span></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="fairphone" data-gw="none" data-gw-text="">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/fairphone.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo f" style="display:none">F</div>Fairphone</div></td>
+            <td><span class="cat-tag electronics">Electronics</span></td>
+            <td><span class="grade grade-a">A</span></td>
+            <td>85%</td><td>88%</td><td>82%</td>
+            <td><span class="cert">B Corp 136.8</span><span class="cert">EcoVadis Platinum</span></td>
+            <td class="gw-cell"><span class="gw-clean">✓ Clean</span></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="organicvalley" data-gw="none" data-gw-text="">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/organicvalley.coop.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo o" style="display:none">O</div>Organic Valley</div></td>
+            <td><span class="cat-tag food">Food</span></td>
+            <td><span class="grade grade-a">A-</span></td>
+            <td>70%</td><td>82%</td><td>88%</td>
+            <td><span class="cert">USDA Organic</span><span class="cert">Oregon Tilth</span></td>
+            <td class="gw-cell"><span class="gw-clean">✓ Clean</span></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="apple" data-gw="low" data-gw-text="Apple's supply chain relies heavily on Foxconn factories where labour conditions have been repeatedly flagged. The company's 'carbon neutral by 2030' pledge excludes Scope 3 emissions from product use — its largest source of emissions. MSCI downgraded its supply chain transparency score in 2023.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/apple.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo a" style="display:none">A</div>Apple</div></td>
+            <td><span class="cat-tag electronics">Electronics</span></td>
+            <td><span class="grade grade-b">B+</span></td>
+            <td>78%</td><td>62%</td><td>73%</td>
+            <td><span class="cert">MSCI BBB</span><span class="cert">EPEAT Gold</span><span class="cert">Sustainalytics 16.9</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Low greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="loreal" data-gw="high" data-gw-text="L'Oréal's 'L'Oréal for the Future' program has been criticised by the European Commission for vague sustainability claims. A 2022 UK ASA ruling found their 'green beauty' ads misleading. The brand still uses microplastics in many products and sources palm oil from disputed suppliers despite pledges to the contrary.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/loreal.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo l" style="display:none">L</div>L'Oréal</div></td>
+            <td><span class="cat-tag beauty">Beauty</span></td>
+            <td><span class="grade grade-b">B</span></td>
+            <td>65%</td><td>70%</td><td>63%</td>
+            <td><span class="cert">MSCI AA</span><span class="cert">Sustainalytics 20.1</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="nike" data-gw="high" data-gw-text="Nike's 'Move to Zero' campaign was challenged by the Dutch Advertising Code Authority in 2021 for exaggerated sustainability claims. Only 38% of materials used are recycled or sustainable despite headline marketing. Labour violations in Vietnamese and Indonesian factories were documented by the Worker Rights Consortium as recently as 2024.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/nike.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo n" style="display:none">N</div>Nike</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-c">C+</span></td>
+            <td>58%</td><td>44%</td><td>62%</td>
+            <td><span class="cert">MSCI BB</span><span class="cert">Sustainalytics 18.7</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="hm" data-gw="high" data-gw-text="H&M's 'Conscious Collection' was the subject of a formal EU investigation in 2021. The Norwegian Consumer Authority found that scorecards used to market items as 'sustainable' were misleading and based on incomplete data. A 2023 Changing Markets Foundation report found H&M still produced more fast fashion garments than any other European retailer, despite sustainability claims.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/hm.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo h" style="display:none">H</div>H&amp;M</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-d">D</span></td>
+            <td>30%</td><td>35%</td><td>28%</td>
+            <td><span class="cert none">None verified</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="microsoft" data-gw="none" data-gw-text="">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/microsoft.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo m" style="display:none">M</div>Microsoft</div></td>
+            <td><span class="cat-tag electronics">Electronics</span></td>
+            <td><span class="grade grade-a">A-</span></td>
+            <td>88%</td><td>72%</td><td>70%</td>
+            <td><span class="cert">MSCI AAA</span><span class="cert">CDP A</span></td>
+            <td class="gw-cell"><span class="gw-clean">✓ Clean</span></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="google" data-gw="low" data-gw-text="Google claimed to be 'carbon neutral since 2007' but this relied largely on purchasing renewable energy certificates rather than direct decarbonisation. In 2022, Google acknowledged it could not claim 24/7 carbon-free energy match in most data center regions. Its AI infrastructure expansion has significantly increased energy consumption.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/google.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo g" style="display:none">G</div>Google</div></td>
+            <td><span class="cat-tag electronics">Electronics</span></td>
+            <td><span class="grade grade-b">B+</span></td>
+            <td>80%</td><td>65%</td><td>68%</td>
+            <td><span class="cert">MSCI AA</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Low greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="ikea" data-gw="low" data-gw-text="IKEA's 'People & Planet Positive' plan has faced scrutiny over its timber sourcing. A 2020 Earthsight investigation found IKEA sourced wood from illegally logged forests in Ukraine. While IKEA claims 98% FSC-certified wood, third-party audits have found inconsistencies in the certification chain.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/ikea.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo i" style="display:none">I</div>IKEA</div></td>
+            <td><span class="cat-tag home">Home</span></td>
+            <td><span class="grade grade-b">B</span></td>
+            <td>68%</td><td>62%</td><td>75%</td>
+            <td><span class="cert">FSC 98%</span><span class="cert">SBTi</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Low greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="allbirds" data-gw="none" data-gw-text="">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/allbirds.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo a" style="display:none">A</div>Allbirds</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-a">A-</span></td>
+            <td>82%</td><td>70%</td><td>85%</td>
+            <td><span class="cert">B Corp 89.4</span><span class="cert">SBTi</span></td>
+            <td class="gw-cell"><span class="gw-clean">✓ Clean</span></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="samsung" data-gw="low" data-gw-text="Samsung markets 'Galaxy for the Planet' commitments but has not disclosed full Scope 3 emissions data. Its recycled ocean plastics program affects less than 3% of total plastic used across product lines. Labour conditions in Vietnamese assembly plants have been flagged by IndustriALL in 2023.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/samsung.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo s" style="display:none">S</div>Samsung</div></td>
+            <td><span class="cat-tag electronics">Electronics</span></td>
+            <td><span class="grade grade-b">B-</span></td>
+            <td>68%</td><td>60%</td><td>70%</td>
+            <td><span class="cert">MSCI A</span><span class="cert">CDP A-</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Low greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="adidas" data-gw="high" data-gw-text="Adidas claimed its 'Stan Smith Mylo' mushroom-leather shoes were sustainable, but produced only a limited run while the vast majority of production remained petroleum-based synthetics. The brand's '2025 sustainability targets' were quietly revised downward in 2023. Its Parley ocean plastics line uses recycled content in under 15% of total production volume.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/adidas.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo a" style="display:none">A</div>Adidas</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-c">C+</span></td>
+            <td>60%</td><td>52%</td><td>65%</td>
+            <td><span class="cert">MSCI A</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="levis" data-gw="low" data-gw-text="Levi's 'Water&lt;Less' program reduced water use in finishing processes but the brand still uses water-intensive conventional cotton for over 60% of its denim. Its sustainability reports do not fully account for Scope 3 supply chain emissions, which represent the majority of its footprint.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/levi.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo l" style="display:none">L</div>Levi's</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-c">C</span></td>
+            <td>55%</td><td>58%</td><td>62%</td>
+            <td><span class="cert">MSCI BBB</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Low greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="tesla" data-gw="high" data-gw-text="Tesla scores poorly on supply chain ethics despite its clean energy positioning. Cobalt sourced from DRC mines with documented child labour has been flagged by Amnesty International. Tesla removed itself from the S&P ESG index in 2022 over worker safety and racial discrimination issues. Its 'Full Self-Driving' energy claims remain unverified.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/tesla.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo t" style="display:none">T</div>Tesla</div></td>
+            <td><span class="cat-tag electronics">Electronics</span></td>
+            <td><span class="grade grade-c">C+</span></td>
+            <td>72%</td><td>35%</td><td>62%</td>
+            <td><span class="cert">MSCI BBB</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="zara" data-gw="high" data-gw-text="Zara's 'Join Life' label has been widely criticised as greenwashing. The label was applied to garments containing as little as 25% organic or recycled content with no third-party verification. Parent company Inditex's total garment production has increased every year since the label launched. A 2024 EU Green Claims Directive investigation named Zara as a primary case study in misleading sustainability marketing.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/zara.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo z" style="display:none">Z</div>Zara</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-d">D</span></td>
+            <td>32%</td><td>30%</td><td>35%</td>
+            <td><span class="cert none">None verified</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="uniqlo" data-gw="high" data-gw-text="Uniqlo's parent Fast Retailing has repeatedly failed to disclose supplier factory lists or living wage data. Its 'LifeWear sustainability' messaging is not backed by independent certifications. A 2023 Good On You review rated Uniqlo 'Not Good Enough' with particular concern over its opaque supply chain and use of non-organic cotton across most product lines.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/uniqlo.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo u" style="display:none">U</div>Uniqlo</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-d">D+</span></td>
+            <td>38%</td><td>32%</td><td>40%</td>
+            <td><span class="cert">MSCI BBB</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="shein" data-gw="high" data-gw-text="SHEIN produces an estimated 6,000–10,000 new styles per day and discloses virtually no environmental data. Its 'evoluSHEIN' sustainable label applies to items with minimal recycled content and no third-party verification. A 2023 Channel 4 investigation found SHEIN factories paying workers as little as 3p per garment. The brand has never published a supplier list or audited factory conditions.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/shein.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo s" style="display:none">S</div>SHEIN</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-d">F</span></td>
+            <td>8%</td><td>6%</td><td>10%</td>
+            <td><span class="cert none">No disclosure</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="primark" data-gw="high" data-gw-text="Primark's 'Sustainable Cotton Programme' claims to source cotton more sustainably but less than 30% of its cotton meets even the basic Better Cotton Initiative standard. The brand has no published science-based targets and its price-point model structurally incentivises overproduction. A 2024 Which? investigation found Primark sustainability claims to be among the least substantiated of any major UK retailer.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/primark.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo p" style="display:none">P</div>Primark</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-d">D</span></td>
+            <td>28%</td><td>30%</td><td>32%</td>
+            <td><span class="cert none">None verified</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="puma" data-gw="low" data-gw-text="Puma's 'Forever Better' sustainability programme lacks independently verified emissions targets. Its use of recycled polyester is limited to select product lines while virgin synthetics dominate production. Puma has not published a full Scope 3 emissions inventory despite commitments to do so by 2023.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/puma.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo p" style="display:none">P</div>Puma</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-c">C+</span></td>
+            <td>58%</td><td>55%</td><td>60%</td>
+            <td><span class="cert">MSCI A</span><span class="cert">CDP A-</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Low greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+          <tr data-brand="everlane" data-gw="high" data-gw-text="Everlane built its brand on 'Radical Transparency' but a 2020 Business of Fashion investigation revealed the company had concealed markups, misrepresented factory conditions, and union-busted its own customer service team. Its 'Choose What You Pay' pricing was discontinued. Multiple former employees went public in 2020 describing a culture of racial discrimination and misleading sustainability marketing.">
+            <td><div class="brand-cell"><img class="brand-logo-img" src="https://icons.duckduckgo.com/ip3/everlane.com.ico" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="brand-logo e" style="display:none">E</div>Everlane</div></td>
+            <td><span class="cat-tag fashion">Fashion</span></td>
+            <td><span class="grade grade-c">C+</span></td>
+            <td>55%</td><td>48%</td><td>60%</td>
+            <td><span class="cert none">None verified</span></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding:10px 16px;font-size:11px;color:#9E9E9E;border-top:1px solid #f0f0ea;">
+        Sources: B Lab Global · Good On You (Jan 2026) · MSCI ESG · Sustainalytics · EcoVadis · CDP · Brand sustainability reports (2024–2026)
+      </div>
+    </div>
+
+    <!-- Greenwashing Popup -->
+    <div class="gw-popup-overlay" id="gwPopupOverlay">
+      <div class="gw-popup">
+        <button class="gw-popup-close" id="gwPopupClose">&times;</button>
+        <div class="gw-popup-icon">⚠️</div>
+        <h3 class="gw-popup-title" id="gwPopupTitle">Greenwashing Alert</h3>
+        <p class="gw-popup-body" id="gwPopupBody"></p>
+        <div class="gw-popup-footer">Source: EU Green Claims Directive · Changing Markets Foundation · Good On You · ASA Rulings</div>
+      </div>
+    </div>
+
+    <!-- ESG Report Overlay -->
+    <div class="esg-overlay" id="esgOverlay">
+      <div class="esg-overlay-backdrop"></div>
+      <div class="esg-overlay-panel">
+        <button class="esg-overlay-close" id="esgOverlayClose">&times;</button>
+        <div class="scanner-result" id="scannerResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── PAGE: SETTINGS ─────────── -->
+  <section class="page" id="page-settings">
+    <div class="settings-shell">
+      <div class="settings-tabs" role="tablist" aria-label="Settings categories">
+        <button type="button" class="settings-tab active" role="tab" aria-selected="true" aria-controls="settings-panel-profile" id="settings-tab-profile" data-settings-tab="profile">Profile</button>
+        <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settings-panel-notifications" id="settings-tab-notifications" data-settings-tab="notifications">Notifications</button>
+        <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settings-panel-extension" id="settings-tab-extension" data-settings-tab="extension">Extension</button>
+        <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settings-panel-privacy" id="settings-tab-privacy" data-settings-tab="privacy">Data &amp; privacy</button>
+      </div>
+
+      <div class="settings-panels">
+        <div class="settings-tab-panel active" id="settings-panel-profile" role="tabpanel" aria-labelledby="settings-tab-profile">
+          <h3 class="settings-panel-title">Profile</h3>
+          <p class="settings-panel-lead">How you appear in EcoAudit and where we estimate shipping impact.</p>
+          <div class="settings-form">
+            <div class="form-row">
+              <label for="settingsName">Display name</label>
+              <input type="text" value="Test User" class="settings-input" id="settingsName"/>
+            </div>
+            <div class="form-row">
+              <label for="settingsEmail">Email</label>
+              <input type="email" class="settings-input" id="settingsEmail" readonly style="color:var(--gray-500,#6B7280);cursor:not-allowed"/>
+            </div>
+            <div class="form-row location-form-row">
+              <label for="locationInput">Location</label>
+              <input type="text" value="San Francisco, CA" class="settings-input" id="locationInput" autocomplete="off" />
+              <div class="location-autocomplete" id="locationAutocomplete"></div>
+            </div>
+            <div class="form-row">
+              <label for="settingsGoal">Sustainability goal</label>
+              <select class="settings-input" id="settingsGoal">
+                <option>Reduce carbon footprint</option>
+                <option>Avoid fast fashion</option>
+                <option>Support local business</option>
+                <option>Zero waste lifestyle</option>
+              </select>
+            </div>
+            <button type="button" class="settings-save-btn" id="settingsSaveBtn">Save Changes</button>
+          </div>
+        </div>
+
+        <div class="settings-tab-panel" id="settings-panel-notifications" role="tabpanel" aria-labelledby="settings-tab-notifications">
+          <h3 class="settings-panel-title">Notifications</h3>
+          <p class="settings-panel-lead">Choose which updates you receive about brands and your footprint.</p>
+          <div class="toggle-list">
+            <div class="toggle-item">
+              <span>Greenwash alerts</span>
+              <div class="toggle active" data-state="on"></div>
+            </div>
+            <div class="toggle-item">
+              <span>Weekly footprint report</span>
+              <div class="toggle active" data-state="on"></div>
+            </div>
+            <div class="toggle-item">
+              <span>New local alternatives nearby</span>
+              <div class="toggle" data-state="off"></div>
+            </div>
+            <div class="toggle-item">
+              <span>Brand score updates</span>
+              <div class="toggle active" data-state="on"></div>
+            </div>
+            <div class="toggle-item">
+              <span>Product page audits</span>
+              <div class="toggle active" data-state="on"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-tab-panel" id="settings-panel-extension" role="tabpanel" aria-labelledby="settings-tab-extension">
+          <h3 class="settings-panel-title">Browser extension</h3>
+          <p class="settings-panel-lead">Control how EcoAudit behaves when you browse product pages.</p>
+          <div class="toggle-list">
+            <div class="toggle-item">
+              <span>Auto-audit product pages</span>
+              <div class="toggle active" data-state="on"></div>
+            </div>
+            <div class="toggle-item">
+              <span>Show eco score badge</span>
+              <div class="toggle active" data-state="on"></div>
+            </div>
+            <div class="toggle-item">
+              <span>Suggest local alternatives</span>
+              <div class="toggle active" data-state="on"></div>
+            </div>
+            <div class="toggle-item">
+              <span>Block greenwash sites</span>
+              <div class="toggle" data-state="off"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-tab-panel" id="settings-panel-privacy" role="tabpanel" aria-labelledby="settings-tab-privacy">
+          <h3 class="settings-panel-title">Data &amp; privacy</h3>
+          <p class="settings-panel-lead">Manage how your shopping data is stored and exported.</p>
+          <div class="privacy-options">
+            <div class="privacy-item">
+              <div>
+                <div class="privacy-title">Shopping history</div>
+                <div class="privacy-sub">Used to calculate your footprint score</div>
+              </div>
+              <button type="button" class="privacy-btn">Manage</button>
+            </div>
+            <div class="privacy-item">
+              <div>
+                <div class="privacy-title">Export my data</div>
+                <div class="privacy-sub">Download all your audit data as CSV</div>
+              </div>
+              <button type="button" class="privacy-btn" id="exportDataBtn">Export</button>
+            </div>
+            <div class="privacy-item danger">
+              <div>
+                <div class="privacy-title">Delete account</div>
+                <div class="privacy-sub">Permanently remove all your data</div>
+              </div>
+              <button type="button" class="privacy-btn danger" id="deleteAccountBtn">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── PAGE: UPLOAD PRODUCTS (camera · manual · receipts) ─────────── -->
+  <section class="page" id="page-track">
+    <div class="products-page-stack">
+    <!-- Mode tabs -->
+    <div class="ps-mode-tabs">
+      <button class="ps-mode-tab active" data-pstab="camera">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Camera Scan
+      </button>
+      <button class="ps-mode-tab" data-pstab="manual">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Manual Entry
+      </button>
+      <button class="ps-mode-tab" data-pstab="receipts">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        Receipts
+      </button>
+    </div>
+
+    <!-- ── Camera pane ── -->
+    <div class="ps-pane active" id="ps-pane-camera">
+      <div class="ps-camera-wrap" id="psCameraWrap">
+        <!-- Placeholder before camera starts -->
+        <div class="ps-camera-placeholder" id="psCameraPlaceholder">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#52B788" stroke-width="1.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <p>Camera will activate when you tap Start</p>
+          <button class="ps-start-btn" id="psStartBtn">Start Camera</button>
+        </div>
+        <!-- Live feed -->
+        <video id="psVideo" autoplay playsinline muted></video>
+        <!-- Canvas overlay for product outline -->
+        <canvas id="psOverlay"></canvas>
+        <!-- Bottom controls -->
+        <div class="ps-cam-controls" id="psCamControls">
+          <button class="ps-capture-btn" id="psCaptureBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Identify Product
+          </button>
+          <button class="ps-flip-btn" id="psFlipBtn" title="Switch camera">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Product candidates -->
+      <div class="ps-candidates-wrap" id="psCandidates">
+        <div class="ps-section-label">Select the correct product:</div>
+        <div class="ps-candidate-list" id="psCandidateList"></div>
+      </div>
+
+      <!-- Camera result (editable) -->
+      <div id="psCameraResult"></div>
+    </div>
+
+    <!-- ── Manual pane ── -->
+    <div class="ps-pane" id="ps-pane-manual">
+      <div class="ps-manual-form">
+        <div class="ps-form-row">
+          <div class="ps-form-field">
+            <label class="ps-label">Brand Name <span style="color:#E53935">*</span></label>
+            <input type="text" class="ps-input" id="psBrand" placeholder="e.g. Patagonia, Nike, SHEIN…" />
+          </div>
+          <div class="ps-form-field">
+            <label class="ps-label">Product Name</label>
+            <input type="text" class="ps-input" id="psProduct" placeholder="e.g. Classic Fleece Jacket" />
+          </div>
+        </div>
+        <div class="ps-form-row">
+          <div class="ps-form-field">
+            <label class="ps-label">Category</label>
+            <select class="ps-input" id="psCategory">
+              <option value="">Select category…</option>
+              <option>Clothing &amp; Apparel</option>
+              <option>Electronics</option>
+              <option>Food &amp; Beverage</option>
+              <option>Home &amp; Furniture</option>
+              <option>Beauty &amp; Personal Care</option>
+              <option>Sports &amp; Outdoor</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="ps-form-field">
+            <label class="ps-label">Additional Context</label>
+            <input type="text" class="ps-input" id="psNotes" placeholder="e.g. sustainable line, second-hand…" />
+          </div>
+        </div>
+        <button class="ps-manual-btn" id="psManualBtn">
+          Audit This Product
+        </button>
+      </div>
+      <div id="psManualResult"></div>
+    </div>
+
+    <!-- ── Receipts (upload + Gmail) ── -->
+    <div class="ps-pane" id="ps-pane-receipts">
+    <div class="fp-card fp-card--import products-import-card">
+      <div class="fp-card-header">
+        <h3>Receipts</h3>
+        <span class="fp-card-subtitle">Upload files or connect Gmail — products are saved to your products and dashboard stats</span>
+      </div>
+
+      <div class="fp-import-grid">
+        <div class="fp-import-col fp-import-col--upload">
+          <h4 class="fp-import-col-title">Upload files</h4>
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="receiptInput" accept="image/*,.pdf,.txt,.eml" multiple />
+            <div class="upload-inner">
+              <div class="upload-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#52B788" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
+              <div class="upload-text">Drop files here</div>
+              <div class="upload-subtext">Product photos, receipts, or confirmations</div>
+              <button class="upload-btn" type="button">Choose Files</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="fp-import-col fp-import-col--gmail" id="emailReceiptPanel">
+          <h4 class="fp-import-col-title">Gmail import</h4>
+          <p class="fp-gmail-account">Account: <strong id="footprintAccountEmail">—</strong></p>
+          <div class="gmail-connect-row">
+            <button type="button" class="upload-btn gmail-btn-outline" id="gmailConnectBtn">Connect Gmail</button>
+            <button type="button" class="upload-btn" id="gmailSearchBtn" disabled>Find receipts</button>
+            <button type="button" class="gmail-btn-text" id="gmailDisconnectBtn" disabled>Disconnect</button>
+          </div>
+          <p class="gmail-status" id="gmailStatus"></p>
+          <div class="gmail-results" id="gmailResults" hidden>
+            <p class="gmail-results-hint">Click any email to import its products.</p>
+            <ul class="gmail-results-list" id="gmailResultsList"></ul>
+          </div>
+          <div class="email-index-section">
+            <h4 class="email-index-title">Imported receipts</h4>
+            <p class="email-index-empty" id="emailIndexEmpty">No email imports yet.</p>
+            <ul class="email-index-list" id="emailIndexList" aria-label="Receipt email index"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="purchase-list-sync" aria-hidden="true">
+        <div id="purchaseList" class="purchase-list purchase-list--sync"></div>
+      </div>
+    </div>
+    </div>
+    </div>
+  </section>
+
+  <!-- ─────────── PAGE: PRODUCT LIBRARY (sortable list) ─────────── -->
+  <section class="page" id="page-library">
+    <div class="library-toolbar">
+      <label class="library-sort-label" for="librarySort"><span>Sort by</span>
+      <select id="librarySort" class="library-sort-select" aria-label="Sort products">
+        <option value="dateDesc">Date added (newest first)</option>
+        <option value="dateAsc">Date added (oldest first)</option>
+        <option value="nameAsc">Product name (A–Z)</option>
+        <option value="nameDesc">Product name (Z–A)</option>
+        <option value="brandAsc">Brand (A–Z)</option>
+        <option value="scoreDesc">Score (high to low)</option>
+        <option value="scoreAsc">Score (low to high)</option>
+      </select>
+      </label>
+    </div>
+    <div class="library-table-wrap">
+      <table class="products-library-table">
+        <thead>
+          <tr>
+            <th scope="col">Product</th>
+            <th scope="col">Brand</th>
+            <th scope="col">Category</th>
+            <th scope="col">Score</th>
+            <th scope="col">Origin</th>
+            <th scope="col">Source</th>
+            <th scope="col">Added</th>
+            <th scope="col" class="library-actions-col"></th>
+          </tr>
+        </thead>
+        <tbody id="productsLibraryBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+  <!-- Greenwash explainer (library + scans) -->
+  <div class="modal-backdrop" id="greenwashModal" hidden role="dialog" aria-modal="true" aria-labelledby="greenwashModalTitle">
+    <div class="modal-sheet">
+      <div class="modal-sheet-head">
+        <h2 id="greenwashModalTitle">Greenwash &amp; risk signals</h2>
+        <button type="button" class="modal-sheet-close" id="greenwashModalClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-sheet-body" id="greenwashModalBody"></div>
+    </div>
+  </div>
+
+<script src="shared/brand-data.js"></script>
+<script src="app.js?v=37"></script>
+</body>
+</html>

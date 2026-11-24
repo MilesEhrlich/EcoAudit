@@ -1,0 +1,8 @@
+# Secrets and local data: never commit these.
+.env
+.env.*
+!.env.example
+accounts.json
+.vercel
+node_modules
+.DS_Store

@@ -1,0 +1,11 @@
+{
+  "name": "ecoaudit",
+  "private": true,
+  "description": "EcoAudit: sustainability audits for brands and products.",
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

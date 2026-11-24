@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EcoAudit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Serif:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green-900: #1B4332;
+      --green-800: #2D6A4F;
+      --green-700: #40916C;
+      --green-500: #52B788;
+      --green-400: #74C69D;
+      --green-300: #95D5B2;
+      --green-200: #B7E4C7;
+      --green-100: #D8F3DC;
+      --green-50:  #F0FFF4;
+      --cream:     #FAFAF7;
+      --cream-dark:#F4F1EB;
+      --white:     #FFFFFF;
+      --gray-200:  #E8E8E0;
+      --gray-400:  #ADADAD;
+      --gray-600:  #757575;
+      --text:      #1E2820;
+      --radius:    8px;
+      --radius-sm: 6px;
+    }
+
+    body {
+      width: 340px;
+      font-family: 'IBM Plex Sans', system-ui, sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--white);
+    }
+
+    /* ─── HEADER ─── */
+    .header {
+      background: var(--green-900);
+      padding: 11px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'IBM Plex Serif', serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--green-100);
+      flex-shrink: 0;
+    }
+    .header-logo svg { flex-shrink: 0; }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .header-score {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1px;
+    }
+    .score-label { font-size: 9px; color: var(--green-300); letter-spacing: .5px; text-transform: uppercase; }
+    .score-val   { font-family: 'IBM Plex Serif', serif; font-size: 16px; font-weight: 600; color: #fff; line-height: 1; }
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+    .header-avatar {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--green-700);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .header-username {
+      font-size: 11px;
+      color: var(--green-300);
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ─── AUTH STATE ─── */
+    .state-auth {
+      padding: 28px 20px 20px;
+    }
+    .auth-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .auth-logo-mark {
+      width: 36px; height: 36px;
+      background: var(--green-900);
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .auth-title {
+      font-family: 'IBM Plex Serif', serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--green-900);
+    }
+    .auth-desc {
+      font-size: 12px;
+      color: var(--gray-600);
+      line-height: 1.55;
+      margin-bottom: 18px;
+    }
+
+    .modal-tabs {
+      display: flex;
+      margin-bottom: 16px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--gray-200);
+    }
+    .modal-tab {
+      flex: 1;
+      padding: 8px 12px;
+      background: var(--cream);
+      border: none;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s, color .15s;
+    }
+    .modal-tab.active {
+      background: var(--green-900);
+      color: #fff;
+      font-weight: 600;
+    }
+    .modal-tab:hover:not(.active) { background: var(--cream-dark); }
+
+    .auth-form { margin-bottom: 12px; }
+    .auth-field { margin-bottom: 11px; }
+    .auth-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green-900);
+      margin-bottom: 4px;
+      letter-spacing: .02em;
+    }
+    .auth-field input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--white);
+      transition: border-color .15s;
+    }
+    .auth-field input:focus {
+      outline: none;
+      border-color: var(--green-500);
+    }
+    .auth-submit {
+      width: 100%;
+      padding: 10px;
+      background: var(--green-800);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s;
+    }
+    .auth-submit:hover { background: var(--green-900); }
+
+    .auth-error, .auth-success {
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .auth-error   { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    .auth-success { background: var(--green-50); color: var(--green-900); border: 1px solid var(--green-200); }
+    .auth-error.show, .auth-success.show { display: block; }
+
+    /* ─── SCANNING STATE ─── */
+    .state-scanning {
+      padding: 36px 20px;
+      text-align: center;
+    }
+    .scan-spinner {
+      width: 36px; height: 36px;
+      border: 2.5px solid var(--green-100);
+      border-top-color: var(--green-500);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .scan-text { font-size: 12.5px; color: var(--gray-600); line-height: 1.55; }
+
+    /* ─── IDLE / READY / OFFLINE STATES ─── */
+    .state-idle, .state-offline {
+      padding: 32px 20px;
+      text-align: center;
+    }
+    .state-ready {
+      padding: 28px 20px;
+      text-align: center;
+    }
+    .state-icon {
+      width: 36px; height: 36px;
+      margin: 0 auto 12px;
+      color: var(--green-500);
+    }
+    .idle-text { color: var(--gray-600); font-size: 12.5px; line-height: 1.5; }
+    .offline-title {
+      font-family: 'IBM Plex Serif', serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .offline-text { color: var(--gray-600); font-size: 12px; line-height: 1.5; }
+    .ready-name {
+      font-family: 'IBM Plex Serif', serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--green-900);
+      margin-bottom: 6px;
+    }
+    .ready-sub {
+      font-size: 12px;
+      color: var(--gray-600);
+      margin-bottom: 18px;
+    }
+
+    /* ─── BUTTONS ─── */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: background .15s;
+    }
+    .btn--primary { background: var(--green-800); color: #fff; }
+    .btn--primary:hover { background: var(--green-900); }
+    .btn--outline { background: var(--white); color: var(--green-800); border: 1.5px solid var(--green-300); }
+    .btn--outline:hover { background: var(--green-50); }
+
+    /* ─── PRODUCT STRIP ─── */
+    .product-strip {
+      padding: 10px 14px;
+      background: var(--cream);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .product-name {
+      font-weight: 600;
+      font-size: 12.5px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      color: var(--text);
+    }
+    .product-url { font-size: 10.5px; color: var(--gray-600); margin-top: 2px; }
+
+    /* ─── BRAND WARNING ─── */
+    .brand-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      background: #FFF8E1;
+      color: #7A4F00;
+      font-size: 10.5px;
+      padding: 7px 14px;
+      border-bottom: 1px solid #FFE0B2;
+      line-height: 1.4;
+    }
+    .brand-warning svg { flex-shrink: 0; margin-top: 1px; }
+
+    /* ─── SCORE ROW ─── */
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .score-circle {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Serif', serif;
+      font-size: 22px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .grade-a { background: var(--green-100); color: #1B4332; border: 2px solid var(--green-300); }
+    .grade-b { background: #E3F2FD; color: #1565C0; border: 2px solid #90CAF9; }
+    .grade-c { background: #FFF9C4; color: #F57F17; border: 2px solid #FFF176; }
+    .grade-d { background: #FFEBEE; color: #C62828; border: 2px solid #FFCDD2; }
+    .grade-f { background: #FFEBEE; color: #B71C1C; border: 2px solid #EF9A9A; }
+
+    .score-detail { min-width: 0; }
+    .score-detail-title { font-size: 12px; font-weight: 600; margin-bottom: 2px; color: var(--text); }
+    .score-detail-sub   { font-size: 11px; color: var(--gray-600); margin-bottom: 4px; }
+    .score-tag {
+      display: inline-block;
+      font-size: 10px; font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .tag-danger { background: #FFEBEE; color: #C62828; }
+    .tag-warn   { background: #FFF8E1; color: #E65100; }
+    .tag-good   { background: var(--green-100); color: #1B4332; }
+
+    /* ─── METRICS ─── */
+    .metrics { padding: 12px 14px; border-bottom: 1px solid var(--gray-200); }
+    .metric-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 7px;
+    }
+    .metric-row:last-child { margin-bottom: 0; }
+    .metric-name  { font-size: 11px; color: var(--gray-600); width: 130px; flex-shrink: 0; }
+    .metric-track { flex: 1; height: 4px; background: var(--gray-200); border-radius: 99px; overflow: hidden; }
+    .metric-fill  { height: 100%; border-radius: 99px; transition: width .6s ease; }
+    .metric-pct   { font-size: 11px; font-weight: 600; width: 30px; text-align: right; color: var(--text); }
+
+    /* ─── CLAIMS ─── */
+    .claims { padding: 10px 14px; border-bottom: 1px solid var(--gray-200); }
+    .claims-title {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--gray-400); margin-bottom: 7px;
+    }
+    .claim-item {
+      display: flex; align-items: flex-start;
+      gap: 7px; font-size: 11.5px; padding: 3px 0;
+      line-height: 1.4;
+    }
+    .claim-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      margin-top: 4px; flex-shrink: 0;
+    }
+    .claim-item.pass .claim-dot { background: var(--green-700); }
+    .claim-item.fail .claim-dot { background: #C62828; }
+    .claim-item.warn .claim-dot { background: #E65100; }
+    .claim-item.pass { color: var(--green-900); }
+    .claim-item.fail { color: #6D1A1A; }
+    .claim-item.warn { color: #5D3E00; }
+
+    /* ─── PURCHASE DECISION ─── */
+    .purchase-decision {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .purchase-q {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--green-900);
+      margin-bottom: 9px;
+    }
+    .purchase-btn--yes {
+      display: block;
+      width: 100%;
+      padding: 9px;
+      background: var(--green-800);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s;
+    }
+    .purchase-btn--yes:hover { background: var(--green-900); }
+    .purchase-loading {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--gray-200);
+      text-align: center;
+    }
+    .purchase-confirm {
+      display: none;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+      color: var(--green-900);
+      background: var(--green-50);
+    }
+
+    /* ─── FOOTER ─── */
+    .popup-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 14px;
+      background: var(--cream);
+      border-top: 1px solid var(--gray-200);
+    }
+    .footer-link {
+      font-size: 11.5px;
+      color: var(--green-700);
+      text-decoration: none;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 0;
+    }
+    .footer-link:hover { text-decoration: underline; }
+    .footer-link--muted {
+      color: var(--gray-600);
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">
+    <img src="icon128.png" alt="EcoAudit" style="width:22px;height:22px;border-radius:5px;object-fit:contain;" />
+    EcoAudit
+  </div>
+  <div class="header-right">
+    <div class="header-user hidden" id="headerUser">
+      <div class="header-avatar" id="headerAvatar">?</div>
+      <span class="header-username" id="headerUsername">User</span>
+    </div>
+    <div class="header-score" id="headerScoreWrap">
+      <span class="score-label">Eco Score</span>
+      <span class="score-val" id="headerScore">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH STATE -->
+<div class="state-auth hidden" id="stateAuth">
+  <div class="auth-logo-row">
+    <div class="auth-logo-mark">
+      <img src="icon128.png" alt="EcoAudit" style="width:22px;height:22px;border-radius:4px;object-fit:contain;" />
+    </div>
+    <div class="auth-title" id="authTitle">Sign in to EcoAudit</div>
+  </div>
+  <div class="auth-desc" id="authDesc">Connect your account to scan products and track your sustainability footprint.</div>
+
+  <div class="modal-tabs" id="authTabs">
+    <button class="modal-tab active" data-tab="login">Sign In</button>
+    <button class="modal-tab" data-tab="signup">Create Account</button>
+  </div>
+
+  <div class="auth-error" id="authError"></div>
+  <div class="auth-success" id="authSuccess"></div>
+
+  <!-- LOGIN FORM -->
+  <form class="auth-form" id="loginForm">
+    <div class="auth-field">
+      <label for="loginEmail">Email</label>
+      <input type="email" id="loginEmail" name="loginEmail" autocomplete="email" placeholder="you@example.com" required />
+    </div>
+    <div class="auth-field">
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" name="loginPassword" autocomplete="current-password" placeholder="Your password" required />
+    </div>
+    <button type="submit" class="auth-submit">Sign In</button>
+  </form>
+
+  <!-- SIGNUP FORM -->
+  <form class="auth-form" id="signupForm" style="display:none">
+    <div class="auth-field">
+      <label for="signupName">Full Name</label>
+      <input type="text" id="signupName" name="signupName" autocomplete="name" placeholder="Your name" required />
+    </div>
+    <div class="auth-field">
+      <label for="signupEmail">Email</label>
+      <input type="email" id="signupEmail" name="signupEmail" autocomplete="email" placeholder="you@example.com" required />
+    </div>
+    <div class="auth-field">
+      <label for="signupPassword">Password</label>
+      <input type="password" id="signupPassword" name="signupPassword" autocomplete="new-password" placeholder="At least 6 characters" minlength="6" required />
+    </div>
+    <button type="submit" class="auth-submit">Create Account</button>
+  </form>
+</div>
+
+<!-- AUDIT CONTENT -->
+<div id="auditContent">
+
+  <!-- Scanning state -->
+  <div class="state-scanning hidden" id="stateScanning">
+    <div class="scan-spinner"></div>
+    <div class="scan-text" id="scanText">Extracting product details…<br>Checking brand sustainability data</div>
+  </div>
+
+  <!-- Ready state -->
+  <div class="state-ready hidden" id="stateReady">
+    <div class="state-icon">
+    </div>
+    <div class="ready-name" id="readyProductName">Product Name</div>
+    <div class="ready-sub">Ready to scan this item's footprint.</div>
+    <button class="btn btn--primary" id="scanNowBtn">Scan this product</button>
+  </div>
+
+  <!-- Idle state -->
+  <div class="state-idle hidden" id="stateIdle">
+    <div class="state-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    </div>
+    <div class="idle-text">Open a supported product page to scan.</div>
+  </div>
+
+  <!-- Offline state -->
+  <div class="state-offline hidden" id="stateOffline">
+    <div class="state-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01"/>
+      </svg>
+    </div>
+    <div class="offline-title">Server Unavailable</div>
+    <div class="offline-text">Could not reach the EcoAudit server.<br>Make sure localhost:3000 is running.</div>
+  </div>
+
+  <!-- Result state -->
+  <div id="stateResult" class="hidden">
+    <div class="product-strip">
+      <div class="product-name" id="productName">—</div>
+      <div class="product-url"  id="productBrandInfo">—</div>
+    </div>
+
+    <div id="brandWarning" class="brand-warning hidden">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span><b>Brand detection uncertain.</b> Auditing retailer fallback.</span>
+    </div>
+
+    <div class="score-row">
+      <div class="score-circle grade-d" id="scoreCircle">?</div>
+      <div class="score-detail">
+        <div class="score-detail-title" id="scoreTitle">Sustainability Score</div>
+        <div class="score-detail-sub"   id="scoreSubtitle">— / 100</div>
+        <span class="score-tag tag-danger" id="scoreTag">Scanning…</span>
+      </div>
+    </div>
+
+    <div class="metrics" id="metricsBlock"></div>
+
+    <div class="claims" id="claimsBlock">
+      <div class="claims-title">AI Claim Analysis</div>
+      <div id="claimsList"></div>
+    </div>
+
+    <!-- Purchase decision -->
+    <div class="purchase-decision" id="purchaseDecision">
+      <div class="purchase-q">Did you purchase this item?</div>
+      <button class="purchase-btn--yes" id="purchaseYes">Yes, add to library</button>
+    </div>
+
+    <div class="purchase-loading hidden" id="purchaseLoading">
+      <div class="scan-spinner" style="width:22px; height:22px; border-width:2px; margin: 0 auto 6px;"></div>
+      <div style="font-size:11px; color:var(--gray-600);">Saving…</div>
+    </div>
+
+    <div class="purchase-confirm hidden" id="purchaseConfirmYes">
+      Added to your product library
+    </div>
+  </div>
+
+</div>
+
+<div class="popup-footer hidden" id="popupFooter">
+  <button class="footer-link" id="openDashboard">Open Dashboard ↗</button>
+  <button class="footer-link footer-link--muted" id="signOutBtn">Sign out</button>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
