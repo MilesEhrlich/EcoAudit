@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy · EcoAudit</title>
+  <meta name="description" content="How EcoAudit collects, uses, and protects your information, including data from Google sign-in and Gmail." />
+  <link rel="icon" href="koala-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green-900: #1B4332; --green-800: #2D6A4F; --green-100: #D8F3DC; --green-50: #F0FFF4;
+      --text: #1A1A1A; --gray-600: #6B7280; --border: #E5E7EB; --white: #FFFFFF;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: var(--text); background: var(--white); line-height: 1.7; }
+    header { border-bottom: 1px solid var(--border); }
+    .bar { max-width: 760px; margin: 0 auto; padding: 18px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--green-900); font-family: 'IBM Plex Serif', serif; font-weight: 700; font-size: 20px; }
+    .brand img { width: 32px; height: 32px; border-radius: 8px; }
+    .back { color: var(--green-800); text-decoration: none; font-weight: 500; font-size: 14px; }
+    main { max-width: 760px; margin: 0 auto; padding: 40px 16px 80px; }
+    h1 { font-family: 'IBM Plex Serif', serif; color: var(--green-900); font-size: clamp(30px, 6vw, 40px); line-height: 1.15; margin: 0 0 8px; }
+    .meta { color: var(--gray-600); font-size: 14px; margin: 0 0 28px; }
+    .summary { background: var(--green-50); border: 1px solid var(--green-100); border-radius: 12px; padding: 18px 20px; margin-bottom: 32px; }
+    .summary ul { margin: 8px 0 0; padding-left: 20px; }
+    h2 { font-family: 'IBM Plex Serif', serif; color: var(--green-900); font-size: 22px; margin: 36px 0 8px; }
+    h3 { font-size: 16px; margin: 20px 0 4px; }
+    p, li { font-size: 16px; }
+    ul { padding-left: 22px; }
+    li { margin: 4px 0; }
+    a { color: var(--green-800); }
+    table { width: 100%; border-collapse: collapse; font-size: 15px; margin: 8px 0; }
+    th, td { text-align: left; vertical-align: top; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+    th { font-weight: 600; color: var(--green-900); }
+    .table-wrap { overflow-x: auto; }
+    footer { border-top: 1px solid var(--border); color: var(--gray-600); font-size: 14px; }
+    footer .bar { justify-content: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <a class="brand" href="landing.html"><img src="koala-logo.png" alt="" />EcoAudit</a>
+      <a class="back" href="landing.html">← Back to EcoAudit</a>
+    </div>
+  </header>
+
+  <main>
+    <h1>Privacy Policy</h1>
+    <p class="meta">Effective November 24, 2026</p>
+
+    <div class="summary">
+      <strong>The short version</strong>
+      <ul>
+        <li>We collect only what's needed to run your account: your name, email, and (if you use a password) a securely hashed password.</li>
+        <li>Your tracked products, stats, and location stay in your own browser, not on our servers.</li>
+        <li>Gmail access is optional and read-only. We read only the receipt emails you choose to import, and we never store your emails.</li>
+        <li>We never sell your data, show ads, or use it to train AI models.</li>
+        <li>You can delete your account at any time from Settings.</li>
+      </ul>
+    </div>
+
+    <h2>Who we are</h2>
+    <p>EcoAudit is a student project, built at Fordham University's RamHack hackathon, that rates the sustainability of brands and products. It is operated by Miles Ehrlich. Questions about this policy or your data can be sent to <a href="mailto:ehrlich.miles@gmail.com">ehrlich.miles@gmail.com</a>.</p>
+
+    <h2>Information we collect</h2>
+
+    <h3>Account information</h3>
+    <p>When you create an account with an email and password, we store your name, email address, and a one-way scrypt hash of your password (never the password itself). When you sign in, we set a signed, HttpOnly cookie that keeps you signed in for up to 7 days.</p>
+
+    <h3>Continue with Google</h3>
+    <p>If you sign in with Google, we ask Google only for your name and email address (the <code>openid</code>, <code>email</code>, and <code>profile</code> permissions). We use them to create or sign in to your EcoAudit account. We do not receive your Google password.</p>
+
+    <h3>Gmail receipt import (optional)</h3>
+    <p>If you choose <em>Connect Gmail</em>, you grant EcoAudit read-only access to your Gmail (<code>gmail.readonly</code>). We use it only to:</p>
+    <ul>
+      <li>search your inbox for likely purchase receipts and order confirmations from the last 90 days, and show you a list of them (subject, sender, date, and a short preview);</li>
+      <li>read the full text of the specific receipts <strong>you select</strong>, so the products you bought can be added to your footprint.</li>
+    </ul>
+    <p>We never send email, change or delete messages, or read emails you don't select. Email content is processed in memory to fulfil your request and is not stored on our servers. The access token Google issues is kept in your own browser so you don't have to reconnect each time; disconnecting or deleting your account removes it, and you can revoke access at any time at <a href="https://myaccount.google.com/permissions" rel="noopener">myaccount.google.com/permissions</a>.</p>
+
+    <h3>Things you scan or upload</h3>
+    <p>Brand names, product details, photos from your camera, and receipts you upload are sent to our AI provider (see below) to produce a sustainability audit. We do not keep these on our servers.</p>
+
+    <h3>Data kept in your browser</h3>
+    <p>Your tracked products, dashboard stats, notifications, and any location you set (including from <em>Use My Location</em>) are saved in your browser's local storage on your device. They are not uploaded to our servers. Clearing your browser data removes them.</p>
+
+    <h3>Usage-limit counters</h3>
+    <p>To prevent abuse and keep the service free, we count AI requests per account and per IP address each day. These counters contain your email or IP address and a number, and expire automatically within 2 days.</p>
+
+    <h2>How we use information</h2>
+    <ul>
+      <li>To provide EcoAudit's features: your account, sustainability audits, and receipt import.</li>
+      <li>To protect the service: sign-in security and usage limits.</li>
+    </ul>
+    <p>We do not sell your information, use it for advertising, or share it with data brokers. We do not use your information, including any data from Google, to develop, improve, or train AI or machine-learning models.</p>
+
+    <h2>Google user data</h2>
+    <p>EcoAudit's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements. Data from Google is used only to provide the user-facing features described above, is transferred only to the service providers below as needed to provide those features, and is never read by people except with your explicit permission, for security purposes, or as required by law.</p>
+
+    <h2>Service providers</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Provider</th><th>What it does</th><th>What it receives</th></tr></thead>
+        <tbody>
+          <tr><td>Vercel</td><td>Hosts the website and server</td><td>Standard request data such as IP address</td></tr>
+          <tr><td>Upstash</td><td>Account database</td><td>Name, email, password hash, usage counters</td></tr>
+          <tr><td>Anthropic (Claude)</td><td>Generates sustainability audits</td><td>The text, images, or receipt content you submit for analysis</td></tr>
+          <tr><td>Google</td><td>Google sign-in and Gmail import</td><td>Only what's needed to sign you in or fetch the receipts you choose</td></tr>
+          <tr><td>OpenStreetMap Nominatim</td><td>Location search</td><td>The place name you type into location search</td></tr>
+          <tr><td>DuckDuckGo, jsDelivr, unpkg, Google Fonts</td><td>Brand icons, map and font files</td><td>Standard request data such as IP address</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Keeping your data safe</h2>
+    <p>All traffic uses HTTPS. Passwords are hashed with scrypt, session cookies are signed and HttpOnly, and secret keys live only in our hosting provider's encrypted settings, never in the code.</p>
+
+    <h2>Deleting your data</h2>
+    <p>Go to <strong>Settings → Data &amp; privacy → Delete account</strong> to permanently delete your account from our database and clear EcoAudit's data from your browser. You can also email us to request deletion. Usage counters expire on their own within 2 days.</p>
+
+    <h2>Children</h2>
+    <p>EcoAudit is not directed to children under 13, and we do not knowingly collect information from them.</p>
+
+    <h2>Changes</h2>
+    <p>If this policy changes, we'll update the date at the top of this page. Significant changes affecting Google data will be made before any new use begins.</p>
+  </main>
+
+  <footer><div class="bar">© 2026 EcoAudit · <a href="landing.html">&nbsp;Home</a></div></footer>
+</body>
+</html>

@@ -2968,7 +2968,7 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
   /* ── Delete account ── */
   const deleteAccountBtn = document.getElementById('deleteAccountBtn');
   if (deleteAccountBtn) {
-    deleteAccountBtn.addEventListener('click', () => {
+    deleteAccountBtn.addEventListener('click', async () => {
       const confirmed = confirm(
         'Are you sure you want to delete your account?\n\n' +
         'This will permanently remove:\n' +
@@ -2980,8 +2980,12 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
       if (!confirmed) return;
 
       try {
+        // Delete the account on the server first; stop if that fails so nothing is half-deleted.
+        const del = await fetch('/api/account', { method: 'DELETE' });
+        if (!del.ok && del.status !== 401) throw new Error('the server could not delete it (' + del.status + ')');
         const user = JSON.parse(localStorage.getItem('ecoaudit_user') || 'null');
         if (user && user.email) {
+          localStorage.removeItem('ecoaudit_gmail_refresh:' + user.email.trim().toLowerCase());
           const accounts = JSON.parse(localStorage.getItem('ecoaudit_accounts') || '[]');
           const filtered = accounts.filter(a => a.email !== user.email);
           localStorage.setItem('ecoaudit_accounts', JSON.stringify(filtered));
