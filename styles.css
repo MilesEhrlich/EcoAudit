@@ -3363,3 +3363,22 @@ h1, h2, h3, .page-title, .section-title { letter-spacing: -.01em; }
   .topbar-nav .nav-item { padding: 12px 4px; margin: 0; border-bottom: 1px solid var(--gray-200); }
   .topbar-nav .nav-item.active { border-bottom: 1px solid var(--gray-200); box-shadow: inset 3px 0 0 var(--green-800); padding-left: 12px; }
 }
+
+/* "Explain my score" panel: dark text on the light card (it was styled for the old dark-green banner) */
+.hero-explain-panel { border-top: 1px solid var(--gray-200); background: var(--gray-100) !important; }
+.hero-explain-content { color: var(--gray-800); font-size: 14px; }
+.hero-explain-lead { color: var(--text); }
+.hero-explain-list, .hero-explain-context, .hero-explain-total { color: var(--gray-800); }
+.hero-explain-list strong, .hero-explain-context strong, .hero-explain-lead strong { color: var(--text); }
+.hero-explain-hint { color: var(--gray-600); }
+.hero-explain-total { background: var(--white) !important; border: 1px solid var(--gray-200); border-radius: 4px; }
+.hero-explain-alert { background: #FAF5EA; border: 1px solid #EADCB8; border-radius: 4px; color: #6B4E12; }
+
+/* Thin dividers between the top navigation headings (desktop) */
+@media (min-width: 901px) {
+  .topbar-nav .nav-item { position: relative; }
+  .topbar-nav .nav-item + .nav-item::before {
+    content: ''; position: absolute; left: -11px; top: 50%; width: 1px; height: 16px; margin-top: -8px;
+    background: var(--gray-200); pointer-events: none;
+  }
+}
