@@ -43,12 +43,12 @@
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EcoAudit — Sustainability Impact Dashboard</title>
-  <link rel="icon" href="koala-logo.png" type="image/png" />
-  <link rel="apple-touch-icon" href="koala-logo.png" />
+  <title>EcoAudit</title>
+  <link rel="icon" href="assets/favicon-32.png" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="stylesheet" href="styles.css?v=37" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js" crossorigin=""></script>
@@ -65,7 +65,7 @@
       </button>
       <a href="#" class="topbar-logo" data-page="dashboard" aria-label="EcoAudit home">
         <span class="logo-icon">
-          <img src="koala-logo.png" alt="EcoAudit" class="topbar-logo-img" width="36" height="36" />
+          <img src="assets/logo.png" alt="" class="topbar-logo-img" width="32" height="32" />
         </span>
         <span class="logo-text">EcoAudit</span>
       </a>
@@ -144,7 +144,7 @@
     <div class="hero-banner">
       <div class="hero-banner-top">
         <div class="hero-text">
-          <h1>Good morning, Test <span class="wave">🌿</span></h1>
+          <h1>Good morning</h1>
           <p id="heroSubtext">Start scanning brands and uploading receipts to track your impact!</p>
         </div>
         <div class="hero-badge">
@@ -222,28 +222,11 @@
       </div>
     </div>
 
-    <!-- ECO TIPS CAROUSEL -->
-    <div class="ecotips-header-row">
-      <span class="ecotips-header-label">Eco Tips</span>
-    </div>
-    <div class="ecotips" id="ecoTips" role="region" aria-roledescription="carousel" aria-label="Sustainable shopping tips">
-      <div class="ecotips-body">
-        <button class="ecotips-arrow ecotips-arrow--prev" id="ecoTipsPrev" aria-label="Previous tip" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <div class="ecotips-track-wrap">
-          <div class="ecotips-track" id="ecoTipsTrack" aria-live="off">
-            <!-- Slides rendered by JS -->
-          </div>
-        </div>
-        <button class="ecotips-arrow ecotips-arrow--next" id="ecoTipsNext" aria-label="Next tip" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 6 15 12 9 18"/></svg>
-        </button>
-      </div>
-      <div class="ecotips-dots" id="ecoTipsDots" role="tablist" aria-label="Tip navigation"></div>
-      <div class="ecotips-empty" id="ecoTipsEmpty" style="display:none">
-        <span>No tips available right now.</span>
-      </div>
+    <!-- ECO TIP (one line) -->
+    <div class="tip-line" aria-live="polite">
+      <span class="tip-line-label">Tip</span>
+      <p class="tip-line-text"><strong id="ecoTipTitle"></strong> <span id="ecoTipBody"></span></p>
+      <button type="button" class="tip-line-next" id="ecoTipNext">Next tip</button>
     </div>
 
     <!-- CHARTS ROW -->
@@ -394,7 +377,7 @@
             <td><span class="grade grade-a">A</span></td>
             <td>84%</td><td>78%</td><td>92%</td>
             <td><span class="cert">B Corp 151.4</span><span class="cert">bluesign®</span><span class="cert">SBTi</span></td>
-            <td class="gw-cell"><span class="gw-clean">✓ Clean</span></td>
+            <td class="gw-cell"><span class="gw-clean">Clean</span></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="eileenfisher" data-gw="none" data-gw-text="">
@@ -403,7 +386,7 @@
             <td><span class="grade grade-a">A-</span></td>
             <td>82%</td><td>76%</td><td>85%</td>
             <td><span class="cert">B Corp 109.4</span><span class="cert">GOTS</span><span class="cert">Fair Trade</span></td>
-            <td class="gw-cell"><span class="gw-clean">✓ Clean</span></td>
+            <td class="gw-cell"><span class="gw-clean">Clean</span></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="fairphone" data-gw="none" data-gw-text="">
@@ -412,7 +395,7 @@
             <td><span class="grade grade-a">A</span></td>
             <td>85%</td><td>88%</td><td>82%</td>
             <td><span class="cert">B Corp 136.8</span><span class="cert">EcoVadis Platinum</span></td>
-            <td class="gw-cell"><span class="gw-clean">✓ Clean</span></td>
+            <td class="gw-cell"><span class="gw-clean">Clean</span></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="organicvalley" data-gw="none" data-gw-text="">
@@ -421,7 +404,7 @@
             <td><span class="grade grade-a">A-</span></td>
             <td>70%</td><td>82%</td><td>88%</td>
             <td><span class="cert">USDA Organic</span><span class="cert">Oregon Tilth</span></td>
-            <td class="gw-cell"><span class="gw-clean">✓ Clean</span></td>
+            <td class="gw-cell"><span class="gw-clean">Clean</span></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="apple" data-gw="low" data-gw-text="Apple's supply chain relies heavily on Foxconn factories where labour conditions have been repeatedly flagged. The company's 'carbon neutral by 2030' pledge excludes Scope 3 emissions from product use — its largest source of emissions. MSCI downgraded its supply chain transparency score in 2023.">
@@ -430,7 +413,7 @@
             <td><span class="grade grade-b">B+</span></td>
             <td>78%</td><td>62%</td><td>73%</td>
             <td><span class="cert">MSCI BBB</span><span class="cert">EPEAT Gold</span><span class="cert">Sustainalytics 16.9</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Low greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Some greenwashing risk. Click for details.">Some risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="loreal" data-gw="high" data-gw-text="L'Oréal's 'L'Oréal for the Future' program has been criticised by the European Commission for vague sustainability claims. A 2022 UK ASA ruling found their 'green beauty' ads misleading. The brand still uses microplastics in many products and sources palm oil from disputed suppliers despite pledges to the contrary.">
@@ -439,7 +422,7 @@
             <td><span class="grade grade-b">B</span></td>
             <td>65%</td><td>70%</td><td>63%</td>
             <td><span class="cert">MSCI AA</span><span class="cert">Sustainalytics 20.1</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk. Click for details.">High risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="nike" data-gw="high" data-gw-text="Nike's 'Move to Zero' campaign was challenged by the Dutch Advertising Code Authority in 2021 for exaggerated sustainability claims. Only 38% of materials used are recycled or sustainable despite headline marketing. Labour violations in Vietnamese and Indonesian factories were documented by the Worker Rights Consortium as recently as 2024.">
@@ -448,7 +431,7 @@
             <td><span class="grade grade-c">C+</span></td>
             <td>58%</td><td>44%</td><td>62%</td>
             <td><span class="cert">MSCI BB</span><span class="cert">Sustainalytics 18.7</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk. Click for details.">High risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="hm" data-gw="high" data-gw-text="H&M's 'Conscious Collection' was the subject of a formal EU investigation in 2021. The Norwegian Consumer Authority found that scorecards used to market items as 'sustainable' were misleading and based on incomplete data. A 2023 Changing Markets Foundation report found H&M still produced more fast fashion garments than any other European retailer, despite sustainability claims.">
@@ -457,7 +440,7 @@
             <td><span class="grade grade-d">D</span></td>
             <td>30%</td><td>35%</td><td>28%</td>
             <td><span class="cert none">None verified</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk. Click for details.">High risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="microsoft" data-gw="none" data-gw-text="">
@@ -466,7 +449,7 @@
             <td><span class="grade grade-a">A-</span></td>
             <td>88%</td><td>72%</td><td>70%</td>
             <td><span class="cert">MSCI AAA</span><span class="cert">CDP A</span></td>
-            <td class="gw-cell"><span class="gw-clean">✓ Clean</span></td>
+            <td class="gw-cell"><span class="gw-clean">Clean</span></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="google" data-gw="low" data-gw-text="Google claimed to be 'carbon neutral since 2007' but this relied largely on purchasing renewable energy certificates rather than direct decarbonisation. In 2022, Google acknowledged it could not claim 24/7 carbon-free energy match in most data center regions. Its AI infrastructure expansion has significantly increased energy consumption.">
@@ -475,7 +458,7 @@
             <td><span class="grade grade-b">B+</span></td>
             <td>80%</td><td>65%</td><td>68%</td>
             <td><span class="cert">MSCI AA</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Low greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Some greenwashing risk. Click for details.">Some risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="ikea" data-gw="low" data-gw-text="IKEA's 'People & Planet Positive' plan has faced scrutiny over its timber sourcing. A 2020 Earthsight investigation found IKEA sourced wood from illegally logged forests in Ukraine. While IKEA claims 98% FSC-certified wood, third-party audits have found inconsistencies in the certification chain.">
@@ -484,7 +467,7 @@
             <td><span class="grade grade-b">B</span></td>
             <td>68%</td><td>62%</td><td>75%</td>
             <td><span class="cert">FSC 98%</span><span class="cert">SBTi</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Low greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Some greenwashing risk. Click for details.">Some risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="allbirds" data-gw="none" data-gw-text="">
@@ -493,7 +476,7 @@
             <td><span class="grade grade-a">A-</span></td>
             <td>82%</td><td>70%</td><td>85%</td>
             <td><span class="cert">B Corp 89.4</span><span class="cert">SBTi</span></td>
-            <td class="gw-cell"><span class="gw-clean">✓ Clean</span></td>
+            <td class="gw-cell"><span class="gw-clean">Clean</span></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="samsung" data-gw="low" data-gw-text="Samsung markets 'Galaxy for the Planet' commitments but has not disclosed full Scope 3 emissions data. Its recycled ocean plastics program affects less than 3% of total plastic used across product lines. Labour conditions in Vietnamese assembly plants have been flagged by IndustriALL in 2023.">
@@ -502,7 +485,7 @@
             <td><span class="grade grade-b">B-</span></td>
             <td>68%</td><td>60%</td><td>70%</td>
             <td><span class="cert">MSCI A</span><span class="cert">CDP A-</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Low greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Some greenwashing risk. Click for details.">Some risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="adidas" data-gw="high" data-gw-text="Adidas claimed its 'Stan Smith Mylo' mushroom-leather shoes were sustainable, but produced only a limited run while the vast majority of production remained petroleum-based synthetics. The brand's '2025 sustainability targets' were quietly revised downward in 2023. Its Parley ocean plastics line uses recycled content in under 15% of total production volume.">
@@ -511,7 +494,7 @@
             <td><span class="grade grade-c">C+</span></td>
             <td>60%</td><td>52%</td><td>65%</td>
             <td><span class="cert">MSCI A</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk. Click for details.">High risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="levis" data-gw="low" data-gw-text="Levi's 'Water&lt;Less' program reduced water use in finishing processes but the brand still uses water-intensive conventional cotton for over 60% of its denim. Its sustainability reports do not fully account for Scope 3 supply chain emissions, which represent the majority of its footprint.">
@@ -520,7 +503,7 @@
             <td><span class="grade grade-c">C</span></td>
             <td>55%</td><td>58%</td><td>62%</td>
             <td><span class="cert">MSCI BBB</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Low greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Some greenwashing risk. Click for details.">Some risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="tesla" data-gw="high" data-gw-text="Tesla scores poorly on supply chain ethics despite its clean energy positioning. Cobalt sourced from DRC mines with documented child labour has been flagged by Amnesty International. Tesla removed itself from the S&P ESG index in 2022 over worker safety and racial discrimination issues. Its 'Full Self-Driving' energy claims remain unverified.">
@@ -529,7 +512,7 @@
             <td><span class="grade grade-c">C+</span></td>
             <td>72%</td><td>35%</td><td>62%</td>
             <td><span class="cert">MSCI BBB</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk. Click for details.">High risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="zara" data-gw="high" data-gw-text="Zara's 'Join Life' label has been widely criticised as greenwashing. The label was applied to garments containing as little as 25% organic or recycled content with no third-party verification. Parent company Inditex's total garment production has increased every year since the label launched. A 2024 EU Green Claims Directive investigation named Zara as a primary case study in misleading sustainability marketing.">
@@ -538,7 +521,7 @@
             <td><span class="grade grade-d">D</span></td>
             <td>32%</td><td>30%</td><td>35%</td>
             <td><span class="cert none">None verified</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk. Click for details.">High risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="uniqlo" data-gw="high" data-gw-text="Uniqlo's parent Fast Retailing has repeatedly failed to disclose supplier factory lists or living wage data. Its 'LifeWear sustainability' messaging is not backed by independent certifications. A 2023 Good On You review rated Uniqlo 'Not Good Enough' with particular concern over its opaque supply chain and use of non-organic cotton across most product lines.">
@@ -547,7 +530,7 @@
             <td><span class="grade grade-d">D+</span></td>
             <td>38%</td><td>32%</td><td>40%</td>
             <td><span class="cert">MSCI BBB</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk. Click for details.">High risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="shein" data-gw="high" data-gw-text="SHEIN produces an estimated 6,000–10,000 new styles per day and discloses virtually no environmental data. Its 'evoluSHEIN' sustainable label applies to items with minimal recycled content and no third-party verification. A 2023 Channel 4 investigation found SHEIN factories paying workers as little as 3p per garment. The brand has never published a supplier list or audited factory conditions.">
@@ -556,7 +539,7 @@
             <td><span class="grade grade-d">F</span></td>
             <td>8%</td><td>6%</td><td>10%</td>
             <td><span class="cert none">No disclosure</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk. Click for details.">High risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="primark" data-gw="high" data-gw-text="Primark's 'Sustainable Cotton Programme' claims to source cotton more sustainably but less than 30% of its cotton meets even the basic Better Cotton Initiative standard. The brand has no published science-based targets and its price-point model structurally incentivises overproduction. A 2024 Which? investigation found Primark sustainability claims to be among the least substantiated of any major UK retailer.">
@@ -565,7 +548,7 @@
             <td><span class="grade grade-d">D</span></td>
             <td>28%</td><td>30%</td><td>32%</td>
             <td><span class="cert none">None verified</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk. Click for details.">High risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="puma" data-gw="low" data-gw-text="Puma's 'Forever Better' sustainability programme lacks independently verified emissions targets. Its use of recycled polyester is limited to select product lines while virgin synthetics dominate production. Puma has not published a full Scope 3 emissions inventory despite commitments to do so by 2023.">
@@ -574,7 +557,7 @@
             <td><span class="grade grade-c">C+</span></td>
             <td>58%</td><td>55%</td><td>60%</td>
             <td><span class="cert">MSCI A</span><span class="cert">CDP A-</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Low greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-low" title="Some greenwashing risk. Click for details.">Some risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
           <tr data-brand="everlane" data-gw="high" data-gw-text="Everlane built its brand on 'Radical Transparency' but a 2020 Business of Fashion investigation revealed the company had concealed markups, misrepresented factory conditions, and union-busted its own customer service team. Its 'Choose What You Pay' pricing was discontinued. Multiple former employees went public in 2020 describing a culture of racial discrimination and misleading sustainability marketing.">
@@ -583,7 +566,7 @@
             <td><span class="grade grade-c">C+</span></td>
             <td>55%</td><td>48%</td><td>60%</td>
             <td><span class="cert none">None verified</span></td>
-            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk">⚠️</button></td>
+            <td class="gw-cell"><button class="gw-warn-btn gw-high" title="High greenwashing risk. Click for details.">High risk</button></td>
             <td><button class="brand-remove-btn" title="Remove brand">&times;</button></td>
           </tr>
         </tbody>
@@ -597,7 +580,7 @@
     <div class="gw-popup-overlay" id="gwPopupOverlay">
       <div class="gw-popup">
         <button class="gw-popup-close" id="gwPopupClose">&times;</button>
-        <div class="gw-popup-icon">⚠️</div>
+        <div class="gw-popup-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
         <h3 class="gw-popup-title" id="gwPopupTitle">Greenwashing Alert</h3>
         <p class="gw-popup-body" id="gwPopupBody"></p>
         <div class="gw-popup-footer">Source: EU Green Claims Directive · Changing Markets Foundation · Good On You · ASA Rulings</div>

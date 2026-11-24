@@ -7,6 +7,15 @@
 (function () {
   'use strict';
 
+  /* Escape text that came from the AI (or from emails it read) before putting it in HTML. */
+  const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  /* "Hand-checked" for the curated brand database, "AI estimate" for anything Claude generated. */
+  const provenanceBadge = isAI => isAI
+    ? '<span class="provenance provenance-ai" title="Estimated by AI from public information. Treat as a starting point.">AI estimate</span>'
+    : '<span class="provenance provenance-checked" title="Researched by hand from the sources listed below.">Hand-checked</span>';
+  const scoreColor = n => n >= 70 ? '#2F7A4A' : n >= 50 ? '#6E8F2E' : n >= 35 ? '#B7841C' : '#BF5B2C';
+  const claimDot = status => `<span class="claim-dot claim-dot-${status === 'verified' ? 'good' : status === 'negative' ? 'bad' : 'mixed'}" aria-label="${status === 'verified' ? 'Verified' : status === 'negative' ? 'Problem' : 'Unclear'}"></span>`;
+
   /* ── Extension Auth Bridge ── */
   const ECOAUDIT_EXTENSION_ID = window.ecoauditExtensionId || 'jgdahdonhelocfmhmfioenpeeokmnadp';
 
@@ -156,7 +165,7 @@
     const el = document.querySelector('.hero-text h1');
     const user = (() => { try { return JSON.parse(localStorage.getItem('ecoaudit_user')); } catch { return null; } })();
     const name = user ? user.name.split(' ')[0] : 'there';
-    if (el) el.innerHTML = `${greeting}, ${name} <span class="wave">🌿</span>`;
+    if (el) el.textContent = `${greeting}, ${name}`;
   }
   setGreeting();
 
@@ -558,7 +567,7 @@
     dotsG.innerHTML = points.map(p =>
       `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#2D6A4F"/>`
     ).join('');
-    dotsG.lastElementChild?.setAttribute('fill', '#52B788');
+    dotsG.lastElementChild?.setAttribute('fill', '#7FAE8A');
     dotsG.lastElementChild?.setAttribute('stroke', '#fff');
     dotsG.lastElementChild?.setAttribute('stroke-width', '2');
   }
@@ -899,13 +908,15 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEsgOverlay(); });
 
   function renderResult(data) {
+    const ai = !!data.isAI;
+    const txt = v => ai ? esc(v) : v; // curated database text may contain intentional <strong> tags
     scanResult.innerHTML = `
       <div class="result-header">
         <div class="result-brand-info">
-          <div class="result-brand-icon" style="background:${data.gradientEnd}">${data.initial}</div>
+          <div class="result-brand-icon" style="background:${ai ? '#3F5A48' : data.gradientEnd}">${esc(data.initial)}</div>
           <div>
-            <div class="result-brand-name">${data.name}</div>
-            <div class="result-brand-type">${data.type}</div>
+            <div class="result-brand-name">${txt(data.name)} ${provenanceBadge(ai)}</div>
+            <div class="result-brand-type">${txt(data.type)}</div>
           </div>
         </div>
         <div class="result-grade ${data.gradeClass}">${data.grade}</div>
@@ -913,23 +924,20 @@
       <div class="result-metrics">
         ${data.metrics.map(m => `
           <div class="metric-row">
-            <span class="metric-name">${m.name}</span>
+            <span class="metric-name">${esc(m.name)}</span>
             <div class="metric-bar-wrap">
-              <div class="metric-bar" style="width:0%; background:${m.color}" data-target="${m.score}"></div>
+              <div class="metric-bar" style="width:0%; background:${scoreColor(m.score)}" data-target="${m.score}"></div>
             </div>
             <span class="metric-score">${m.score}%</span>
           </div>
         `).join('')}
       </div>
       <div class="result-claims">
-        <h4>Claim Analysis <span style="font-weight:400;font-size:11px;color:#757575;margin-left:6px;">Source: ${data.source}</span></h4>
-        ${data.claims.map(c => {
-          const icon = c.status === 'verified' ? '✅' : c.status === 'negative' ? '❌' : '⚠️';
-          return `<div class="claim ${c.status}">
-            <span class="claim-icon">${icon}</span>
-            <span>${c.text}</span>
-          </div>`;
-        }).join('')}
+        <h4>Claims <span style="font-weight:400;font-size:11px;color:var(--gray-600);margin-left:6px;">Source: ${txt(data.source)}</span></h4>
+        ${data.claims.map(c => `<div class="claim ${esc(c.status)}">
+            ${claimDot(c.status)}
+            <span>${txt(c.text)}</span>
+          </div>`).join('')}
       </div>
     `;
     openEsgOverlay();
@@ -986,7 +994,7 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
       scanResult.innerHTML = `
         <div class="result-header">
           <div class="result-brand-info">
-            <div class="result-brand-icon" style="background:#455A64">${query.charAt(0).toUpperCase()}</div>
+            <div class="result-brand-icon" style="background:#455A64">${esc(query.charAt(0).toUpperCase())}</div>
             <div>
               <div class="result-brand-name">${query}</div>
               <div class="result-brand-type">Could not retrieve data — try another brand name</div>
@@ -995,11 +1003,12 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
           <div class="result-grade grade-c">?</div>
         </div>
         <div style="background:#FFF8E1;border-left:3px solid #F9A825;padding:10px 14px;border-radius:6px;margin:12px 0;font-size:12px;color:#5D4037;">
-          ⚠️ Could not generate a sustainability audit for <strong>${query}</strong>. Try a more specific brand name.
+          Could not generate a sustainability audit for <strong>${esc(query)}</strong>. Try a more specific brand name.
         </div>`;
       return;
     }
 
+    data.isAI = true;
     renderResult(data);
   }
 
@@ -1136,7 +1145,7 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
       .map(n => n.textContent.trim()).filter(Boolean).join('') ||
       brandCell?.textContent.replace(/^[A-Z]\s*/, '').split('✦')[0].trim() || 'This brand';
     const text = row.dataset.gwText || '';
-    gwTitle.textContent = `⚠️ ${brandName} — Greenwashing Alert`;
+    gwTitle.textContent = `${brandName}: greenwashing concerns`;
     gwBody.textContent = text;
     gwOverlay.classList.add('open');
   });
@@ -1282,8 +1291,8 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
         const gwCell = document.getElementById(`gw-cell-${b.name.replace(/\s+/g,'_')}`);
         if (gwCell) {
           gwCell.innerHTML = risk === 'none'
-            ? '<span class="gw-clean">✓ Clean</span>'
-            : `<button class="gw-warn-btn gw-${risk}" title="${risk} greenwashing risk">⚠️</button>`;
+            ? '<span class="gw-clean">Clean</span>'
+            : `<button class="gw-warn-btn gw-${risk}" title="${risk === 'high' ? 'High' : 'Some'} greenwashing risk. Click for details.">${risk === 'high' ? 'High risk' : 'Some risk'}</button>`;
         }
       } catch {
         const gwCell = document.getElementById(`gw-cell-${b.name.replace(/\s+/g,'_')}`);
@@ -1474,7 +1483,7 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
       style: {
         color: '#2D6A4F',
         weight: 2,
-        fillColor: '#52B788',
+        fillColor: '#7FAE8A',
         fillOpacity: opacity,
         interactive: false,
       },
@@ -1517,7 +1526,7 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
     let totalDist = 0;
     let countryCount = 0;
     let listHTML = '';
-    const colors = ['#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7', '#D8F3DC', '#A5835A', '#D4A373', '#CCD5AE'];
+    const colors = ['#2D6A4F', '#40916C', '#7FAE8A', '#74C69D', '#95D5B2', '#B7E4C7', '#D8F3DC', '#A5835A', '#D4A373', '#CCD5AE'];
 
     for (const [country, group] of entries) {
       if (!group.coords) continue;
@@ -2284,7 +2293,7 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
       const d = el.dataset;
       const score = +d.aiScore;
       const { grade, cls } = gradeFromScore(score);
-      const barColor = score >= 70 ? '#52B788' : score >= 40 ? '#FFD54F' : '#EF9A9A';
+      const barColor = score >= 70 ? '#7FAE8A' : score >= 40 ? '#FFD54F' : '#EF9A9A';
 
       const existing = document.getElementById('purchaseReportOverlay');
       if (existing) existing.remove();
@@ -2304,7 +2313,7 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
               <div class="purchase-report-score ${cls}">${grade}</div>
               <div>
                 <div class="purchase-report-brand">${d.aiBrand} · ${d.aiCategory}</div>
-                <div class="purchase-report-summary">${d.aiSummary}</div>
+                <div class="purchase-report-summary">${esc(d.aiSummary)}</div>
               </div>
             </div>
             <div class="purchase-report-bar-section">
@@ -2314,19 +2323,19 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
             <div class="purchase-report-details">
               <div class="purchase-report-detail-item">
                 <div class="purchase-report-detail-label">Materials</div>
-                <div class="purchase-report-detail-text">${d.aiMaterials}</div>
+                <div class="purchase-report-detail-text">${esc(d.aiMaterials)}</div>
               </div>
               <div class="purchase-report-detail-item positive">
-                <div class="purchase-report-detail-label">✅ Positives</div>
-                <div class="purchase-report-detail-text">${d.aiPositives}</div>
+                <div class="purchase-report-detail-label">Positives</div>
+                <div class="purchase-report-detail-text">${esc(d.aiPositives)}</div>
               </div>
               ${d.originCountry ? `<div class="purchase-report-detail-item origin">
                 <div class="purchase-report-detail-label">Origin</div>
                 <div class="purchase-report-detail-text">${d.originCity ? d.originCity + ', ' : ''}${d.originCountry}</div>
               </div>` : ''}
               <div class="purchase-report-detail-item concern">
-                <div class="purchase-report-detail-label">⚠️ Concerns</div>
-                <div class="purchase-report-detail-text">${d.aiConcerns}</div>
+                <div class="purchase-report-detail-label">Concerns</div>
+                <div class="purchase-report-detail-text">${esc(d.aiConcerns)}</div>
               </div>
             </div>
             <div class="purchase-report-footer">
@@ -2954,7 +2963,7 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
         if (greetEl) {
           const h = new Date().getHours();
           const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-          greetEl.innerHTML = `${greeting}, ${newName.split(' ')[0]} <span class="wave">🌿</span>`;
+          greetEl.textContent = `${greeting}, ${newName.split(' ')[0]}`;
         }
 
         settingsSaveBtn.textContent = 'Saved!';
@@ -3091,6 +3100,9 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
     let traceComplete = false;  // true once outline fully drawn
     let traceLabel    = 'Analyzing…'; // badge text on frozen frame
     let lastCameraImageDataUrl = '';
+    // Front-facing cameras are shown mirrored (like FaceTime) so moving the product feels natural.
+    // Only the on-screen preview is flipped: the photo sent to the AI is the camera's real image.
+    let mirrored = false;
 
     /* ── Mode tabs ── */
     document.querySelectorAll('.ps-mode-tab').forEach(tab => {
@@ -3143,7 +3155,13 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
 
       if (traceMode && frozenImg) {
         /* ── FROZEN FRAME + PROGRESSIVE TRACE ── */
-        ctx.drawImage(frozenImg, 0, 0, W, H);
+        if (mirrored) {
+          ctx.save(); ctx.translate(W, 0); ctx.scale(-1, 1);
+          ctx.drawImage(frozenImg, 0, 0, W, H);
+          ctx.restore();
+        } else {
+          ctx.drawImage(frozenImg, 0, 0, W, H);
+        }
 
         // Dim outside the detection zone
         ctx.fillStyle = 'rgba(0,0,0,0.48)';
@@ -3159,10 +3177,10 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
 
           // Draw the partial outline using dash trick
           ctx.save();
-          ctx.strokeStyle = '#52B788';
+          ctx.strokeStyle = '#7FAE8A';
           ctx.lineWidth   = 3.5;
           ctx.lineCap     = 'round';
-          ctx.shadowColor = 'rgba(82,183,136,0.9)';
+          ctx.shadowColor = 'rgba(127,174,138,0.9)';
           ctx.shadowBlur  = 10;
           ctx.setLineDash([traceProgress, perimeter + 2]);
           ctx.lineDashOffset = 0;
@@ -3179,9 +3197,9 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
           const scanFrac = traceProgress / perimeter;
           const scanY    = by + bh * scanFrac;
           const sGrad    = ctx.createLinearGradient(0, scanY - 14, 0, scanY + 14);
-          sGrad.addColorStop(0,   'rgba(82,183,136,0)');
-          sGrad.addColorStop(0.5, 'rgba(82,183,136,0.55)');
-          sGrad.addColorStop(1,   'rgba(82,183,136,0)');
+          sGrad.addColorStop(0,   'rgba(127,174,138,0)');
+          sGrad.addColorStop(0.5, 'rgba(127,174,138,0.55)');
+          sGrad.addColorStop(1,   'rgba(127,174,138,0)');
           ctx.fillStyle = sGrad;
           ctx.fillRect(bx, scanY - 14, bw, 28);
 
@@ -3190,19 +3208,19 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
           pulseT += 0.06;
           const alpha = 0.6 + 0.3 * Math.sin(pulseT);
           ctx.save();
-          ctx.strokeStyle = `rgba(82,183,136,${alpha})`;
+          ctx.strokeStyle = `rgba(127,174,138,${alpha})`;
           ctx.lineWidth   = 3;
-          ctx.shadowColor = 'rgba(82,183,136,0.55)';
+          ctx.shadowColor = 'rgba(127,174,138,0.55)';
           ctx.shadowBlur  = 14;
           ctx.setLineDash([]);
           ctx.strokeRect(bx, by, bw, bh);
           ctx.restore();
-          drawCorners(ctx, bx, by, bw, bh, `rgba(82,183,136,1)`, 26, 4);
+          drawCorners(ctx, bx, by, bw, bh, `rgba(127,174,138,1)`, 26, 4);
 
           // Badge
           const badgeText  = traceLabel;
           const badgeW     = ctx.measureText(badgeText).width + 26;
-          ctx.fillStyle    = 'rgba(27,67,50,0.92)';
+          ctx.fillStyle    = 'rgba(31,59,41,0.92)';
           ctx.beginPath();
           ctx.roundRect(bx, by - 32, badgeW, 27, 7);
           ctx.fill();
@@ -3222,9 +3240,9 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
         scanLine += 2.2 * scanDir;
         if (scanLine >= bh || scanLine <= 0) scanDir *= -1;
         const grad = ctx.createLinearGradient(0, by + scanLine - 14, 0, by + scanLine + 14);
-        grad.addColorStop(0,   'rgba(82,183,136,0)');
-        grad.addColorStop(0.5, 'rgba(82,183,136,0.65)');
-        grad.addColorStop(1,   'rgba(82,183,136,0)');
+        grad.addColorStop(0,   'rgba(127,174,138,0)');
+        grad.addColorStop(0.5, 'rgba(127,174,138,0.65)');
+        grad.addColorStop(1,   'rgba(127,174,138,0)');
         ctx.fillStyle = grad;
         ctx.fillRect(bx, by + scanLine - 14, bw, 28);
 
@@ -3248,6 +3266,13 @@ Use real data from MSCI, Sustainalytics, B Lab, Good On You, CDP, SBTi, and bran
         });
         psVideo.srcObject = stream;
         await psVideo.play();
+
+        // Which way does this camera face? Phones report 'environment' for the back camera.
+        // Laptop webcams usually report nothing, and they face the user.
+        const track = stream.getVideoTracks()[0];
+        const reported = track && track.getSettings ? track.getSettings().facingMode : undefined;
+        mirrored = reported ? reported === 'user' : (facingMode === 'user' || !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent));
+        psVideo.classList.toggle('mirrored', mirrored);
 
         psPlaceholder.style.display = 'none';
         psVideo.classList.add('active');
@@ -3472,7 +3497,7 @@ Use real published ESG data (MSCI, Good On You, B Lab, Sustainalytics). Always s
       data = mergeOriginIntoScanData(data || {});
       const container  = document.getElementById(containerId);
       const gradeClass = /^A/.test(data.grade) ? 'grade-a' : /^B/.test(data.grade) ? 'grade-b' : /^C/.test(data.grade) ? 'grade-c' : 'grade-d';
-      const metricColor = s => s >= 70 ? '#52B788' : s >= 40 ? '#FFCC80' : '#EF9A9A';
+      const metricColor = scoreColor;
       const escHtml = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
       const oc = String(data.origin_country || data.originCountry || '').trim();
       const ocy = String(data.origin_city || data.originCity || '').trim();
@@ -3489,14 +3514,15 @@ Use real published ESG data (MSCI, Good On You, B Lab, Sustainalytics). Always s
       container.innerHTML = `
         <div class="ps-result-inner">
           <div class="ps-result-header">
-            <div class="ps-result-brand-icon">${(data.brand || '?').charAt(0).toUpperCase()}</div>
+            <div class="ps-result-brand-icon">${escHtml((data.brand || '?').charAt(0).toUpperCase())}</div>
             <div class="ps-result-info">
-              <div class="ps-result-name" contenteditable="true" title="Click to edit">${data.name || ''}</div>
-              <div class="ps-result-brand-line" contenteditable="true" title="Click to edit">${data.brand || ''} · ${data.category || ''}</div>
-              <div class="ps-result-desc" contenteditable="true" title="Click to edit">${data.description || ''}</div>
-              ${originLine ? `<div class="ps-result-origin"><span class="ps-origin-icon" aria-hidden="true">📍</span><div class="ps-origin-text"><div class="ps-origin-label">Estimated origin</div><div class="ps-origin-val">${escHtml(originLine)}</div></div></div>` : ''}
+              ${provenanceBadge(true)}
+              <div class="ps-result-name" contenteditable="true" title="Click to edit">${escHtml(data.name)}</div>
+              <div class="ps-result-brand-line" contenteditable="true" title="Click to edit">${escHtml(data.brand)} · ${escHtml(data.category)}</div>
+              <div class="ps-result-desc" contenteditable="true" title="Click to edit">${escHtml(data.description)}</div>
+              ${originLine ? `<div class="ps-result-origin"><span class="ps-origin-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span><div class="ps-origin-text"><div class="ps-origin-label">Estimated origin</div><div class="ps-origin-val">${escHtml(originLine)}</div></div></div>` : ''}
             </div>
-            <div class="result-grade ${gradeClass}">${data.grade || '?'}</div>
+            <div class="result-grade ${gradeClass}">${escHtml(data.grade || '?')}</div>
           </div>
 
           <div class="ps-metrics-grid">
@@ -3514,13 +3540,13 @@ Use real published ESG data (MSCI, Good On You, B Lab, Sustainalytics). Always s
 
           ${(data.claims || []).length ? `
           <div class="ps-claims">
-            <div class="ps-claims-title">AI Claim Analysis
-              <span class="ps-source">${data.source || ''}</span>
+            <div class="ps-claims-title">Claims
+              <span class="ps-source">${escHtml(data.source)}</span>
             </div>
             ${(data.claims || []).map(c => `
-              <div class="ps-claim-row ${c.status}">
-                <span>${c.status === 'verified' ? '✅' : '⚠️'}</span>
-                <span contenteditable="true">${c.text}</span>
+              <div class="ps-claim-row ${escHtml(c.status)}">
+                ${claimDot(c.status)}
+                <span contenteditable="true">${escHtml(c.text)}</span>
               </div>`).join('')}
           </div>` : ''}
 
@@ -3615,187 +3641,29 @@ Use REAL published ESG data — MSCI, Good On You, B Lab, Sustainalytics, CDP, S
 
 
   /* ═══════════════════════════════════════
-     ECO TIPS CAROUSEL
-     A lightweight auto-advancing carousel
-     that displays sustainability shopping tips.
-     Uses setTimeout loop + Page Visibility API
-     to prevent background catch-up glitches.
+     ECO TIP: one line under the dashboard header.
+     A different tip each day; "Next tip" cycles through.
   ═══════════════════════════════════════ */
-  (function initEcoTips() {
-    /* ── Tip data ────────────────────────── */
-    const ECO_TIPS = [
-      {
-        title: 'Choose Durability Over Disposability',
-        body: 'Buy durable products you can repair instead of cheap disposables. A well-made item that lasts 5 years beats 5 throwaways every time.',
-        category: 'Shopping',
-      },
-      {
-        title: 'Verify Recycled Material Claims',
-        body: 'Check for recycled materials, but also verify traceability. Look for certifications like GRS (Global Recycled Standard) rather than vague "eco" labels.',
-        category: 'Materials',
-      },
-      {
-        title: 'Second-Hand First',
-        body: 'Consider second-hand or refurbished options before buying new. Platforms like ThredUP, Back Market, and local thrift stores extend product lifespans significantly.',
-        category: 'Second-hand',
-      },
-      {
-        title: 'Minimal Packaging Wins',
-        body: 'Choose products with minimal packaging when alternatives are similar. Excess packaging accounts for nearly a third of municipal waste in most cities.',
-        category: 'Packaging',
-      },
-      {
-        title: 'Buy Local When It Counts',
-        body: 'Buying local can reduce transport impact for some categories — especially fresh food. For durable goods, material sourcing often matters more than last-mile delivery.',
-        category: 'Local',
-      },
-      {
-        title: 'Certifications Over Marketing',
-        body: 'Trust third-party certifications (B Corp, Fair Trade, GOTS) over self-awarded labels. If a brand can\'t name a specific certifier, be skeptical.',
-        category: 'Shopping',
-      },
-      {
-        title: 'Watch Your Water Footprint',
-        body: 'A single cotton t-shirt requires ~2,700 litres of water. Opt for organic cotton, linen, or TENCEL™ Lyocell to reduce your water impact by up to 50%.',
-        category: 'Materials',
-      },
-      {
-        title: 'Track Before You Buy',
-        body: 'Use EcoAudit\'s scanner to check a brand\'s ESG score before purchasing. A 30-second audit can save years of supporting unsustainable practices.',
-        category: 'Shopping',
-      },
+  (function initEcoTip() {
+    const TIPS = [
+      ['Buy to keep.', 'Something you can repair and use for five years beats five cheap replacements.'],
+      ['Check recycled claims.', 'Look for a percentage and a certification like GRS, not just the word “recycled”.'],
+      ['Try second-hand first.', 'Thrift stores, ThredUP and Back Market keep products in use for longer.'],
+      ['Skip the extra packaging.', 'When two options are otherwise similar, pick the one with less packaging.'],
+      ['Local matters most for food.', 'For durable goods, what a product is made of usually matters more than how far it travelled.'],
+      ['Trust certifiers over slogans.', 'B Corp, Fair Trade and GOTS are checked by third parties. “Eco-friendly” is not.'],
+      ['Mind the materials.', 'Conventional cotton is water-hungry; organic cotton, linen and lyocell use less.'],
+      ['Scan before you buy.', 'A quick EcoAudit check takes less time than returning something.'],
     ];
-
-    /* ── DOM refs ───────────────────────── */
-    const root     = document.getElementById('ecoTips');
-    const track    = document.getElementById('ecoTipsTrack');
-    const dotsWrap = document.getElementById('ecoTipsDots');
-    const prevBtn  = document.getElementById('ecoTipsPrev');
-    const nextBtn  = document.getElementById('ecoTipsNext');
-    const emptyEl  = document.getElementById('ecoTipsEmpty');
-
-    if (!root || !track) return;
-
-    /* ── Empty‐state guard ──────────────── */
-    if (!ECO_TIPS.length) {
-      const body = root.querySelector('.ecotips-body');
-      if (body) body.style.display = 'none';
-      dotsWrap.style.display = 'none';
-      emptyEl.style.display = '';
-      return;
-    }
-
-    /* ── Render slides ─────────────────── */
-    track.innerHTML = ECO_TIPS.map((tip, i) => `
-      <div class="ecotips-slide" role="tabpanel" id="ecoTipSlide${i}" aria-label="Tip ${i + 1} of ${ECO_TIPS.length}">
-        <div class="ecotips-slide-title">${tip.title}</div>
-        <div class="ecotips-slide-body">${tip.body}</div>
-        ${tip.category ? `<span class="ecotips-tag">${tip.category}</span>` : ''}
-      </div>
-    `).join('');
-
-    /* ── Render dots ───────────────────── */
-    dotsWrap.innerHTML = ECO_TIPS.map((_, i) =>
-      `<button class="ecotips-dot${i === 0 ? ' active' : ''}" role="tab" aria-label="Go to tip ${i + 1}" aria-selected="${i === 0}" data-index="${i}" type="button"></button>`
-    ).join('');
-
-    const dots = Array.from(dotsWrap.querySelectorAll('.ecotips-dot'));
-
-    /* ── State ─────────────────────────── */
-    let current    = 0;
-    let userPaused = false;   // explicit user pause (reduced-motion counts)
-    let hovered    = false;   // mouse is inside the carousel
-    let focused    = false;   // a focusable inside the carousel has focus
-    let timerId    = null;    // single setTimeout ID — never stacked
-    const INTERVAL = 6000;    // 6 seconds
-
-    /* Detect reduced-motion preference */
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (reducedMotion.matches) userPaused = true;
-    reducedMotion.addEventListener('change', e => {
-      if (e.matches) { userPaused = true; cancelTimer(); }
-    });
-
-    /* ── Core helpers ─────────────────── */
-    function goTo(index) {
-      current = ((index % ECO_TIPS.length) + ECO_TIPS.length) % ECO_TIPS.length;
-      track.style.transform = `translateX(-${current * 100}%)`;
-      dots.forEach((d, i) => {
-        d.classList.toggle('active', i === current);
-        d.setAttribute('aria-selected', String(i === current));
-      });
-    }
-
-    function next() { goTo(current + 1); }
-    function prev() { goTo(current - 1); }
-
-    /* ── Timer management (setTimeout loop) ──
-       Only ONE timer can exist at a time.
-       scheduleNext() clears any existing timer first.
-       The timer only fires if conditions are met;
-       otherwise it simply doesn't reschedule.         */
-    function cancelTimer() {
-      if (timerId !== null) {
-        clearTimeout(timerId);
-        timerId = null;
-      }
-    }
-
-    function shouldAutoplay() {
-      return !userPaused && !hovered && !focused && !document.hidden;
-    }
-
-    function scheduleNext() {
-      cancelTimer();
-      if (!shouldAutoplay()) return;
-      timerId = setTimeout(() => {
-        timerId = null;
-        next();
-        scheduleNext(); // chain: schedule the NEXT tick after advancing
-      }, INTERVAL);
-    }
-
-    /* ── Page Visibility API ─────────── */
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        /* Tab hidden → kill timer immediately, no catch-up */
-        cancelTimer();
-      } else {
-        /* Tab visible → restart fresh from current slide */
-        scheduleNext();
-      }
-    });
-
-    /* ── Event listeners ──────────────── */
-    prevBtn.addEventListener('click', () => { prev(); scheduleNext(); });
-    nextBtn.addEventListener('click', () => { next(); scheduleNext(); });
-
-    dots.forEach(dot => {
-      dot.addEventListener('click', () => {
-        goTo(+dot.dataset.index);
-        scheduleNext();
-      });
-    });
-
-    /* Pause on hover */
-    root.addEventListener('mouseenter', () => { hovered = true;  cancelTimer(); });
-    root.addEventListener('mouseleave', () => { hovered = false; scheduleNext(); });
-
-    /* Pause on keyboard focus inside */
-    root.addEventListener('focusin',  () => { focused = true;  cancelTimer(); });
-    root.addEventListener('focusout', e => {
-      if (!root.contains(e.relatedTarget)) { focused = false; scheduleNext(); }
-    });
-
-    /* Keyboard: left/right arrows */
-    root.addEventListener('keydown', e => {
-      if (e.key === 'ArrowLeft')  { prev(); scheduleNext(); e.preventDefault(); }
-      if (e.key === 'ArrowRight') { next(); scheduleNext(); e.preventDefault(); }
-    });
-
-    /* ── Start ────────────────────────── */
-    goTo(0);
-    scheduleNext();
+    const titleEl = document.getElementById('ecoTipTitle');
+    const bodyEl  = document.getElementById('ecoTipBody');
+    const nextBtn = document.getElementById('ecoTipNext');
+    if (!titleEl || !bodyEl) return;
+    const day = Math.floor(Date.now() / 86400000);
+    let i = day % TIPS.length;
+    function show() { titleEl.textContent = TIPS[i][0]; bodyEl.textContent = TIPS[i][1]; }
+    show();
+    nextBtn?.addEventListener('click', () => { i = (i + 1) % TIPS.length; show(); });
   })();
 
   /* ── Deep Link Routing ── */

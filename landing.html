@@ -3,546 +3,360 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EcoAudit — Know What You Buy</title>
-  <link rel="icon" href="koala-logo.png" type="image/png" />
-  <link rel="apple-touch-icon" href="koala-logo.png" />
+  <title>EcoAudit · Know what you're really buying</title>
+  <meta name="description" content="EcoAudit grades brands and products A–F on climate, supply chain, labour, materials and packaging, and flags green claims that don't hold up. Free, made by students at Fordham University." />
+  <link rel="icon" href="assets/favicon-32.png" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <meta property="og:title" content="EcoAudit · Know what you're really buying" />
+  <meta property="og:description" content="Sustainability grades for brands and products, with sources." />
+  <meta property="og:image" content="https://ecoaudit.miles-ehrlich.com/assets/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --green-900: #1B4332;
-      --green-800: #2D6A4F;
-      --green-700: #40916C;
-      --green-600: #52B788;
-      --green-400: #95D5B2;
-      --green-100: #D8F3DC;
-      --green-50:  #F0FFF4;
-      --earth:     #A5835A;
-      --text:      #1A1A1A;
-      --gray-600:  #6B7280;
-      --white:     #FFFFFF;
-      --shadow:    0 4px 24px rgba(0,0,0,.10);
-      --radius:    14px;
+      --paper: #F6F4EE;
+      --card: #FFFFFF;
+      --ink: #1E2A22;
+      --muted: #5E6A62;
+      --line: #DCD8CC;
+      --line-soft: #E8E5DC;
+      --green: #2F5A3E;
+      --green-deep: #22432E;
+      --tint: #E7EDE4;
+      --grade-a: #2F7A4A; --grade-b: #6E8F2E; --grade-c: #B7841C; --grade-d: #BF5B2C; --grade-f: #A23B2A;
+      --serif: 'Newsreader', Georgia, serif;
+      --sans: 'IBM Plex Sans', system-ui, sans-serif;
+      --mono: 'IBM Plex Mono', ui-monospace, monospace;
     }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--sans); color: var(--ink); background: var(--paper); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+    .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 
-    body {
-      font-family: 'IBM Plex Sans', sans-serif; color: var(--text); background: var(--white); overflow-x: hidden;
-      position: relative;
-    }
+    /* ── Header ── */
+    .site-header { position: sticky; top: 0; z-index: 50; background: var(--paper); border-bottom: 1px solid var(--line); }
+    .site-header .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 24px; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--serif); font-size: 22px; font-weight: 500; color: var(--green-deep); letter-spacing: -.01em; }
+    .brand img { width: 30px; height: 30px; }
+    .site-nav { display: flex; align-items: center; gap: 28px; font-size: 14px; }
+    .site-nav a { text-decoration: none; color: var(--muted); }
+    .site-nav a:hover { color: var(--ink); }
+    .header-actions { display: flex; align-items: center; gap: 18px; font-size: 14px; }
+    .link-btn { background: none; border: none; font: inherit; color: var(--ink); cursor: pointer; padding: 0; }
+    .link-btn:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 500 15px/1 var(--sans); border-radius: 4px; padding: 13px 20px; cursor: pointer; text-decoration: none; border: 1px solid transparent; transition: background .15s, border-color .15s; }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { background: var(--green-deep); }
+    .btn-small { padding: 9px 14px; font-size: 14px; }
+    .btn-ghost { border-color: var(--line); color: var(--ink); background: transparent; }
+    .btn-ghost:hover { border-color: var(--ink); }
 
-    /* Bamboo background pattern */
-    body::before {
-      content: '';
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      opacity: .045;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='1200' viewBox='0 0 800 1200' fill='none' stroke='%232D6A4F' stroke-width='1.2' stroke-linecap='round'%3E%3C!-- Bamboo stalks --%3E%3Cline x1='80' y1='0' x2='80' y2='1200'/%3E%3Cline x1='78' y1='150' x2='82' y2='150' stroke-width='3'/%3E%3Cline x1='78' y1='350' x2='82' y2='350' stroke-width='3'/%3E%3Cline x1='78' y1='550' x2='82' y2='550' stroke-width='3'/%3E%3Cline x1='78' y1='750' x2='82' y2='750' stroke-width='3'/%3E%3Cline x1='78' y1='950' x2='82' y2='950' stroke-width='3'/%3E%3Cline x1='220' y1='0' x2='220' y2='1200'/%3E%3Cline x1='218' y1='200' x2='222' y2='200' stroke-width='3'/%3E%3Cline x1='218' y1='420' x2='222' y2='420' stroke-width='3'/%3E%3Cline x1='218' y1='640' x2='222' y2='640' stroke-width='3'/%3E%3Cline x1='218' y1='860' x2='222' y2='860' stroke-width='3'/%3E%3Cline x1='218' y1='1080' x2='222' y2='1080' stroke-width='3'/%3E%3Cline x1='480' y1='0' x2='480' y2='1200'/%3E%3Cline x1='478' y1='120' x2='482' y2='120' stroke-width='3'/%3E%3Cline x1='478' y1='340' x2='482' y2='340' stroke-width='3'/%3E%3Cline x1='478' y1='560' x2='482' y2='560' stroke-width='3'/%3E%3Cline x1='478' y1='780' x2='482' y2='780' stroke-width='3'/%3E%3Cline x1='478' y1='1000' x2='482' y2='1000' stroke-width='3'/%3E%3Cline x1='650' y1='0' x2='650' y2='1200'/%3E%3Cline x1='648' y1='180' x2='652' y2='180' stroke-width='3'/%3E%3Cline x1='648' y1='380' x2='652' y2='380' stroke-width='3'/%3E%3Cline x1='648' y1='580' x2='652' y2='580' stroke-width='3'/%3E%3Cline x1='648' y1='780' x2='652' y2='780' stroke-width='3'/%3E%3Cline x1='648' y1='980' x2='652' y2='980' stroke-width='3'/%3E%3Cline x1='750' y1='0' x2='750' y2='1200' opacity='.6'/%3E%3Cline x1='748' y1='250' x2='752' y2='250' stroke-width='3' opacity='.6'/%3E%3Cline x1='748' y1='500' x2='752' y2='500' stroke-width='3' opacity='.6'/%3E%3Cline x1='748' y1='750' x2='752' y2='750' stroke-width='3' opacity='.6'/%3E%3Cline x1='748' y1='1000' x2='752' y2='1000' stroke-width='3' opacity='.6'/%3E%3C!-- Bamboo leaves --%3E%3Cpath d='M82 150 Q100 130 115 140 Q100 145 82 150Z' opacity='.7'/%3E%3Cpath d='M82 150 Q100 170 115 160 Q100 155 82 150Z' opacity='.6'/%3E%3Cpath d='M78 350 Q60 330 45 340 Q60 345 78 350Z' opacity='.7'/%3E%3Cpath d='M78 350 Q60 370 45 360 Q60 355 78 350Z' opacity='.6'/%3E%3Cpath d='M82 550 Q110 535 125 545 Q105 548 82 550Z' opacity='.5'/%3E%3Cpath d='M222 200 Q245 180 260 190 Q245 196 222 200Z' opacity='.7'/%3E%3Cpath d='M218 420 Q195 400 180 410 Q195 416 218 420Z' opacity='.6'/%3E%3Cpath d='M222 640 Q250 625 265 635 Q248 638 222 640Z' opacity='.5'/%3E%3Cpath d='M218 860 Q196 840 181 850 Q196 855 218 860Z' opacity='.7'/%3E%3Cpath d='M482 120 Q510 105 525 115 Q508 118 482 120Z' opacity='.7'/%3E%3Cpath d='M478 340 Q455 320 440 330 Q455 335 478 340Z' opacity='.6'/%3E%3Cpath d='M482 560 Q510 545 525 555 Q508 558 482 560Z' opacity='.5'/%3E%3Cpath d='M478 780 Q456 760 441 770 Q456 775 478 780Z' opacity='.6'/%3E%3Cpath d='M652 180 Q680 165 695 175 Q678 178 652 180Z' opacity='.7'/%3E%3Cpath d='M648 380 Q626 360 611 370 Q626 375 648 380Z' opacity='.6'/%3E%3Cpath d='M652 580 Q680 565 695 575 Q678 578 652 580Z' opacity='.5'/%3E%3Cpath d='M648 780 Q625 760 610 770 Q625 775 648 780Z' opacity='.6'/%3E%3Cpath d='M652 980 Q680 965 695 975 Q678 978 652 980Z' opacity='.5'/%3E%3C!-- Additional leaf clusters --%3E%3Cpath d='M82 750 Q105 730 120 742 Q105 746 82 750Z' opacity='.6'/%3E%3Cpath d='M82 750 Q105 770 120 758 Q105 754 82 750Z' opacity='.5'/%3E%3Cpath d='M222 1080 Q250 1065 265 1075 Q248 1078 222 1080Z' opacity='.5'/%3E%3Cpath d='M482 1000 Q510 985 525 995 Q508 998 482 1000Z' opacity='.6'/%3E%3Cpath d='M482 1000 Q510 1015 525 1005 Q508 1002 482 1000Z' opacity='.5'/%3E%3C/svg%3E");
-      background-size: 800px 1200px;
-    }
+    /* ── Hero ── */
+    .hero { padding: 72px 0 88px; }
+    .hero .wrap { display: grid; grid-template-columns: 1fr 460px; gap: 64px; align-items: center; }
+    .hero h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(42px, 6vw, 68px); line-height: 1.02; letter-spacing: -.025em; margin: 18px 0 22px; color: var(--ink); }
+    .hero h1 em { font-style: italic; color: var(--green); }
+    .hero-lede { font-size: 18px; color: var(--muted); max-width: 520px; margin-bottom: 32px; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+    .hero-note { font-size: 13px; color: var(--muted); }
 
-    /* ── NAV ── */
-    .nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 5%; height: 64px;
-      background: rgba(255,255,255,.94);
-      backdrop-filter: blur(14px);
-      border-bottom: 1px solid rgba(0,0,0,.06);
-    }
-    .nav-logo {
-      display: flex; align-items: center; gap: 10px;
-      font-family: 'IBM Plex Serif', serif; font-weight: 700; font-size: 18px; color: var(--green-800);
-      text-decoration: none;
-    }
-    .nav-logo-img {
-      width: 38px; height: 38px; border-radius: 9px; object-fit: contain;
-    }
-    .nav-links { display: flex; align-items: center; gap: 28px; }
-    .nav-links a { text-decoration: none; font-size: 14px; font-weight: 500; color: var(--gray-600); transition: color .2s; }
-    .nav-links a:hover { color: var(--green-800); }
-    .nav-cta {
-      background: var(--green-800); color: #fff !important;
-      padding: 8px 20px; border-radius: 50px; font-weight: 600 !important;
-      transition: background .2s !important;
-    }
-    .nav-cta:hover { background: var(--green-900) !important; }
+    /* Result card (mirrors what the app returns) */
+    .result { background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .result-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 20px 22px 18px; border-bottom: 1px solid var(--line-soft); }
+    .result-head .eyebrow { font-size: 11px; }
+    .result-name { font-family: var(--serif); font-size: 24px; line-height: 1.15; margin-top: 6px; }
+    .result-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .grade { flex-shrink: 0; text-align: center; }
+    .grade-letter { width: 54px; height: 54px; border-radius: 4px; display: grid; place-items: center; font: 500 28px/1 var(--serif); color: #fff; }
+    .grade-label { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 6px; }
+    .bars { padding: 16px 22px 6px; display: grid; gap: 11px; }
+    .bar-row { display: grid; grid-template-columns: 132px 1fr 28px; align-items: center; gap: 12px; font-size: 13px; }
+    .bar-track { height: 6px; border-radius: 1px; background: var(--line-soft); overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 1px; background: var(--grade-d); }
+    .bar-val { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: right; }
+    .findings { padding: 14px 22px 18px; }
+    .findings h4 { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 6px 0 10px; }
+    .finding { display: flex; gap: 10px; font-size: 13.5px; line-height: 1.45; padding: 5px 0; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; background: var(--grade-f); }
+    .result-foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 22px; background: #FAF9F5; border-top: 1px solid var(--line-soft); font-size: 12px; color: var(--muted); }
+    .result-foot strong { color: var(--ink); font-weight: 500; }
+    .tag { font-family: var(--mono); font-size: 11px; padding: 3px 7px; border-radius: 2px; background: var(--tint); color: var(--green-deep); }
 
-    /* ── HERO ── */
-    .hero {
-      min-height: 100vh;
-      padding: 100px 5% 60px;
-      background: #f8f9fa;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
-      align-items: center;
-      position: relative;
-      z-index: 1;
-    }
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--white); border: 1px solid var(--green-400);
-      color: var(--green-800); font-size: 13px; font-weight: 600;
-      padding: 6px 14px; border-radius: 50px; margin-bottom: 24px;
-      box-shadow: 0 2px 8px rgba(82,183,136,.15);
-    }
-    .hero h1 {
-      font-family: 'IBM Plex Serif', serif;
-      font-size: clamp(36px, 5vw, 58px);
-      font-weight: 700;
-      line-height: 1.1;
-      color: var(--green-900);
-      margin-bottom: 20px;
-    }
-    .hero h1 .grad {
-      color: var(--green-800);
-    }
-    .hero-sub {
-      font-size: 17px; color: var(--gray-600); line-height: 1.65;
-      max-width: 480px; margin-bottom: 36px;
-    }
-    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
-    .btn-google {
-      display: flex; align-items: center; gap: 10px;
-      background: var(--white); border: 1.5px solid #ddd;
-      padding: 13px 22px; border-radius: 50px;
-      font-size: 15px; font-weight: 600; cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,.08);
-      transition: box-shadow .2s, transform .15s;
-      font-family: 'IBM Plex Sans', sans-serif; color: var(--text);
-      text-decoration: none;
-    }
-    .btn-google:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); transform: translateY(-1px); }
-    .btn-google svg { flex-shrink: 0; }
-    .btn-demo {
-      display: flex; align-items: center; gap: 8px;
-      background: var(--green-800); color: #fff;
-      padding: 13px 26px; border-radius: 50px;
-      font-size: 15px; font-weight: 600; text-decoration: none;
-      transition: background .2s, transform .15s;
-    }
-    .btn-demo:hover { background: var(--green-900); transform: translateY(-1px); }
-    .hero-note { margin-top: 14px; font-size: 12px; color: #9CA3AF; }
-    .hero-note a { color: var(--green-700); text-decoration: none; }
+    /* ── Sections ── */
+    section.block { padding: 88px 0; border-top: 1px solid var(--line); }
+    .block h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 4vw, 44px); line-height: 1.1; letter-spacing: -.02em; margin: 14px 0 16px; max-width: 640px; }
+    .block .intro { color: var(--muted); font-size: 17px; max-width: 600px; }
 
-    /* ── FLOATING CARDS (hero visual) ── */
-    .hero-visual { position: relative; height: 460px; }
-    .float-card {
-      position: absolute;
-      background: var(--white);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 16px 20px;
-      animation: floatUp 4s ease-in-out infinite alternate;
-    }
-    .float-card:nth-child(2) { animation-delay: -1.5s; }
-    .float-card:nth-child(3) { animation-delay: -3s; }
-    @keyframes floatUp { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+    .ways { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 48px; }
+    .way { border-top: 1px solid var(--ink); padding-top: 18px; }
+    .way .num { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+    .way h3 { font-family: var(--serif); font-weight: 500; font-size: 23px; margin: 10px 0 8px; }
+    .way p { color: var(--muted); font-size: 15px; }
 
-    .card-main { top: 20px; left: 0; right: 60px; }
-    .card-mini1 { bottom: 80px; right: 0; width: 200px; }
-    .card-mini2 { bottom: 0; left: 20px; width: 220px; }
+    .how-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; margin-top: 40px; }
+    .scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 8px 0 10px; }
+    .scale div { padding: 14px 10px 12px; color: #fff; border-radius: 2px; }
+    .scale b { display: block; font: 500 22px/1 var(--serif); }
+    .scale span { font-family: var(--mono); font-size: 11px; opacity: .9; }
+    .scale-note { font-size: 13px; color: var(--muted); }
+    .cats { margin-top: 28px; border-top: 1px solid var(--line); }
+    .cats li { list-style: none; display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+    .cats li span { color: var(--muted); font-size: 14px; text-align: right; }
+    .source { padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .source:first-child { border-top: 1px solid var(--line); }
+    .source h3 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .source p { color: var(--muted); font-size: 15px; }
 
-    .card-brand-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .card-brand-icon {
-      width: 40px; height: 40px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; font-weight: 700; color: #fff;
-    }
-    .card-brand-name { font-weight: 700; font-size: 15px; }
-    .card-brand-type { font-size: 11px; color: var(--gray-600); }
-    .card-grade {
-      margin-left: auto;
-      width: 38px; height: 38px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 800;
-    }
-    .grade-a { background: #D8F3DC; color: #1B4332; }
-    .grade-d { background: #FFEBEE; color: #C62828; }
-    .grade-b { background: #E3F2FD; color: #1565C0; }
-    .card-bar-label { font-size: 11px; color: var(--gray-600); margin-bottom: 4px; margin-top: 8px; }
-    .card-bar-wrap { background: #f0f0ea; border-radius: 50px; height: 6px; }
-    .card-bar-fill { height: 100%; border-radius: 50px; }
-    .card-tag {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 4px 10px; border-radius: 50px;
-      font-size: 11px; font-weight: 600; margin-top: 10px;
-    }
-    .tag-danger { background: #FFEBEE; color: #C62828; }
-    .tag-good { background: #D8F3DC; color: #1B4332; }
-    .tag-warn { background: #FFF8E1; color: #E65100; }
+    .claims { margin-top: 40px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 48px; }
+    .claim { padding: 22px 0; border-top: 1px solid var(--line); }
+    .claim q { font-family: var(--serif); font-size: 24px; quotes: "“" "”"; }
+    .claim p { color: var(--muted); font-size: 15px; margin-top: 6px; }
 
-    .mini-card-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-    .mini-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 4px; }
-    .mini-row .name { color: var(--gray-600); }
-    .mini-grade-dot { width: 20px; height: 20px; border-radius: 50%; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+    .about { display: grid; grid-template-columns: 1fr auto; gap: 48px; align-items: end; }
+    .about p:not(.eyebrow) { color: var(--muted); font-size: 17px; max-width: 620px; }
 
-    /* ── STATS BAR ── */
-    .stats-bar {
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      background: var(--green-900); color: #fff;
-      padding: 32px 5%;
-    }
-    .stat-item { text-align: center; }
-    .stat-n { font-family: 'IBM Plex Serif', serif; font-size: 36px; font-weight: 700; color: var(--green-400); }
-    .stat-label { font-size: 13px; opacity: .75; margin-top: 4px; }
+    .site-footer { border-top: 1px solid var(--line); padding: 28px 0 40px; font-size: 13px; color: var(--muted); }
+    .site-footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: center; }
+    .site-footer nav { display: flex; gap: 20px; }
+    .site-footer a { text-decoration: none; }
+    .site-footer a:hover { color: var(--ink); }
 
-    /* ── FEATURES ── */
-    .features { padding: 80px 5%; background: var(--white); }
-    .section-label { font-size: 13px; font-weight: 700; color: var(--green-700); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 12px; }
-    .section-title { font-family: 'IBM Plex Serif', serif; font-size: clamp(26px,4vw,40px); font-weight: 700; color: var(--green-900); margin-bottom: 16px; }
-    .section-sub { font-size: 16px; color: var(--gray-600); max-width: 520px; line-height: 1.6; margin-bottom: 52px; }
-    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-    .feature-card {
-      padding: 28px 24px; border-radius: var(--radius);
-      border: 1.5px solid #f0ede8; background: #fafaf8;
-      transition: box-shadow .2s, border-color .2s;
-    }
-    .feature-card:hover { box-shadow: var(--shadow); border-color: var(--green-400); }
-    .feature-icon { font-size: 28px; margin-bottom: 16px; }
-    .feature-title { font-family: 'IBM Plex Serif', serif; font-size: 17px; font-weight: 700; color: var(--green-900); margin-bottom: 10px; }
-    .feature-desc { font-size: 14px; color: var(--gray-600); line-height: 1.6; }
-
-    /* ── HOW IT WORKS ── */
-    .how { padding: 80px 5%; background: var(--green-50); }
-    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 52px; }
-    .step { text-align: center; }
-    .step-num {
-      width: 52px; height: 52px; border-radius: 50%;
-      background: var(--green-800); color: #fff;
-      font-family: 'IBM Plex Serif', serif; font-size: 20px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
-    }
-    .step-title { font-family: 'IBM Plex Serif', serif; font-size: 18px; font-weight: 700; color: var(--green-900); margin-bottom: 10px; }
-    .step-desc { font-size: 14px; color: var(--gray-600); line-height: 1.6; }
-    .step-arrow { align-self: center; text-align: center; font-size: 28px; color: var(--green-400); }
-
-    /* ── CTA ── */
-    .cta-section {
-      padding: 80px 5%;
-      background: var(--green-900);
-      text-align: center; color: #fff;
-    }
-    .cta-section h2 { font-family: 'IBM Plex Serif', serif; font-size: clamp(28px,4vw,44px); font-weight: 700; margin-bottom: 16px; }
-    .cta-section p { font-size: 17px; opacity: .8; max-width: 480px; margin: 0 auto 36px; line-height: 1.6; }
-    .cta-btns { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
-
-    /* ── FOOTER ── */
-    footer {
-      background: var(--green-900); color: rgba(255,255,255,.6);
-      padding: 40px 5%; display: flex; align-items: center; justify-content: space-between; flex-wrap: gap;
-      font-size: 13px;
-    }
-    footer .logo { color: #fff; font-family: 'IBM Plex Serif', serif; font-weight: 700; font-size: 16px; }
-    footer a { color: rgba(255,255,255,.6); text-decoration: none; margin-left: 20px; transition: color .2s; }
-    footer a:hover { color: #fff; }
-
-    /* ── LOGIN MODAL ── */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0; z-index: 200;
-      background: rgba(0,0,0,.5); backdrop-filter: blur(4px);
-      align-items: center; justify-content: center;
-    }
+    /* ── Auth modal ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(20,28,23,.6); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 200; }
     .modal-overlay.open { display: flex; }
-    .modal {
-      background: var(--white); border-radius: 20px;
-      padding: 40px; max-width: 420px; width: 92%;
-      text-align: center; position: relative;
-      box-shadow: 0 24px 80px rgba(0,0,0,.2);
-      animation: modalIn .25s ease;
-    }
-    @keyframes modalIn { from { opacity:0; transform:scale(.95); } to { opacity:1; transform:scale(1); } }
-    .modal-close {
-      position: absolute; top: 16px; right: 16px;
-      background: none; border: none; font-size: 20px; cursor: pointer; color: #999;
-    }
-    .modal-close:hover { color: #333; }
-    .modal-logo { font-size: 40px; margin-bottom: 12px; }
-    .modal h2 { font-family: 'IBM Plex Serif', serif; font-size: 22px; font-weight: 700; color: var(--green-900); margin-bottom: 8px; }
-    .modal p.modal-subtitle { font-size: 14px; color: var(--gray-600); line-height: 1.6; margin-bottom: 24px; }
-    .modal-tabs {
-      display: flex; background: #f5f5f0; border-radius: 50px; padding: 3px; margin-bottom: 24px;
-    }
-    .modal-tab {
-      flex: 1; padding: 9px 0; border-radius: 50px; border: none; background: none;
-      font-size: 13px; font-weight: 600; cursor: pointer; color: var(--gray-600);
-      font-family: 'IBM Plex Sans', sans-serif; transition: all .2s;
-    }
-    .modal-tab.active { background: var(--white); color: var(--green-800); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
-    .modal-google-btn {
-      display: flex; align-items: center; justify-content: center; gap: 12px;
-      width: 100%; padding: 13px; border-radius: 50px;
-      border: 1.5px solid #ddd; background: var(--white);
-      font-size: 14px; font-weight: 600; cursor: pointer;
-      font-family: 'IBM Plex Sans', sans-serif; color: var(--text);
-      box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: box-shadow .2s;
-    }
-    .modal-google-btn:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); }
-    .modal-google-btn:disabled { opacity:.6; cursor:not-allowed; }
-    .modal-divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: #ccc; font-size: 12px; }
-    .modal-divider::before, .modal-divider::after { content: ''; flex: 1; height: 1px; background: #eee; }
-    .auth-form { text-align: left; }
+    .modal { position: relative; background: var(--card); width: 100%; max-width: 420px; border-radius: 8px; padding: 32px 28px 24px; max-height: calc(100vh - 32px); overflow-y: auto; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 12px 32px -16px rgba(0,0,0,.35); }
+    .modal-close { position: absolute; top: 14px; right: 14px; width: 32px; height: 32px; border-radius: 6px; border: none; background: none; font-size: 18px; color: var(--muted); cursor: pointer; }
+    .modal-close:hover { background: var(--paper); color: var(--ink); }
+    .modal-logo img { width: 40px; height: 40px; }
+    .modal h2 { font-family: var(--serif); font-weight: 500; font-size: 26px; margin: 12px 0 4px; }
+    .modal-subtitle { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+    .modal-tabs { display: flex; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+    .modal-tab { flex: 1; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 10px 0; font: 500 14px var(--sans); color: var(--muted); cursor: pointer; }
+    .modal-tab.active { color: var(--ink); border-bottom-color: var(--green); }
+    .modal-google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 11px; border: 1px solid var(--line); border-radius: 4px; background: #fff; font: 500 14px var(--sans); color: var(--ink); text-decoration: none; }
+    .modal-google-btn:hover { border-color: var(--ink); }
+    .modal-divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--muted); font-size: 12px; }
+    .modal-divider::before, .modal-divider::after { content: ''; flex: 1; height: 1px; background: var(--line-soft); }
     .auth-field { margin-bottom: 14px; }
-    .auth-field label { display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 5px; }
-    .auth-field input {
-      width: 100%; padding: 11px 14px; border: 1.5px solid #e0e0e0; border-radius: 10px;
-      font-size: 14px; font-family: 'IBM Plex Sans', sans-serif; outline: none; color: var(--text);
-      transition: border-color .2s;
-    }
-    .auth-field input:focus { border-color: var(--green-600); box-shadow: 0 0 0 3px rgba(82,183,136,.1); }
-    .auth-submit {
-      width: 100%; padding: 13px; border-radius: 50px; border: none;
-      background: var(--green-800); color: #fff; font-size: 15px; font-weight: 600;
-      cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; transition: background .2s; margin-top: 4px;
-    }
-    .auth-submit:hover { background: var(--green-900); }
-    .auth-submit:disabled { opacity:.6; cursor:not-allowed; }
-    .auth-error {
-      background: #FFEBEE; color: #C62828; font-size: 12px; padding: 8px 12px;
-      border-radius: 8px; margin-bottom: 12px; display: none; text-align: center;
-    }
-    .auth-error.show { display: block; }
-    .auth-success {
-      background: #D8F3DC; color: #1B4332; font-size: 12px; padding: 8px 12px;
-      border-radius: 8px; margin-bottom: 12px; display: none; text-align: center;
-    }
-    .auth-success.show { display: block; }
-    .modal-demo-link {
-      display: block; margin-top: 16px; font-size: 13px; color: var(--green-700);
-      text-decoration: none; font-weight: 500;
-    }
-    .modal-demo-link:hover { text-decoration: underline; }
-    .modal-terms { font-size: 11px; color: #aaa; margin-top: 16px; line-height: 1.5; }
+    .auth-field label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+    .auth-field input { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 4px; font: 15px var(--sans); color: var(--ink); background: #fff; }
+    .auth-field input:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(47,90,62,.15); }
+    .auth-submit { width: 100%; margin-top: 4px; padding: 12px; border: none; border-radius: 4px; background: var(--green); color: #fff; font: 500 15px var(--sans); cursor: pointer; }
+    .auth-submit:hover { background: var(--green-deep); }
+    .auth-submit:disabled { opacity: .6; cursor: not-allowed; }
+    .auth-error, .auth-success { display: none; font-size: 13px; padding: 10px 12px; border-radius: 4px; margin-bottom: 14px; }
+    .auth-error { background: #FBEDE8; color: #8A2E1C; }
+    .auth-success { background: var(--tint); color: var(--green-deep); }
+    .auth-error.show, .auth-success.show { display: block; }
+    .modal-terms { font-size: 12px; color: var(--muted); margin-top: 16px; text-align: center; }
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 900px) {
-      .hero { grid-template-columns: 1fr; }
-      .hero-visual { height: 300px; }
-      .features-grid, .steps { grid-template-columns: 1fr; }
-      .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    /* ── Responsive ── */
+    @media (max-width: 980px) {
+      .hero .wrap { grid-template-columns: 1fr; gap: 48px; }
+      .result { max-width: 520px; }
+      .how-grid, .claims { grid-template-columns: 1fr; gap: 0 0; }
+      .how-grid { gap: 40px; }
+      .about { grid-template-columns: 1fr; align-items: start; }
     }
-    /* ── HEADER ── */
-    .landing-header {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 5%; height: 62px;
-      background: rgba(255,255,255,.95);
-      backdrop-filter: blur(14px);
-      border-bottom: 1px solid rgba(0,0,0,.06);
+    @media (max-width: 760px) {
+      .site-nav { display: none; }
+      .ways { grid-template-columns: 1fr; gap: 28px; }
+      .hero { padding: 44px 0 64px; }
+      section.block { padding: 64px 0; }
+      .bar-row { grid-template-columns: 112px 1fr 26px; }
+      .scale span { font-size: 10px; }
     }
-    .landing-logo {
-      display: flex; align-items: center; gap: 10px;
-      font-family: 'IBM Plex Serif', serif; font-weight: 700; font-size: 18px;
-      color: var(--green-800); text-decoration: none;
-    }
-    .landing-logo-img {
-      width: 36px; height: 36px; border-radius: 8px; object-fit: contain;
-    }
-    .landing-signin-btn {
-      background: var(--green-800); color: #fff;
-      border: none; border-radius: 50px;
-      padding: 9px 22px; font-size: 14px; font-weight: 600;
-      cursor: pointer; transition: background .2s, transform .15s;
-    }
-    .landing-signin-btn:hover { background: var(--green-900); transform: translateY(-1px); }
-    .hero { padding-top: 130px; }
-
-    @media (max-width: 600px) {
-      .nav-links .nav-link-text { display: none; }
-      .stats-bar { grid-template-columns: repeat(2, 1fr); }
-      footer { flex-direction: column; gap: 12px; text-align: center; }
+    @media (max-width: 420px) {
+      .wrap { padding: 0 16px; }
+      .header-actions { gap: 14px; }
+      .brand { font-size: 20px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ── HEADER ── -->
-<header class="landing-header">
-  <a class="landing-logo" href="#">
-    <img src="koala-logo.png" alt="EcoAudit" class="landing-logo-img" />
-    EcoAudit
-  </a>
-  <button class="landing-signin-btn" onclick="openLogin(event)">Sign In</button>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="landing.html"><img src="assets/logo.png" alt="" />EcoAudit</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="#ways">What it does</a>
+      <a href="#how">How scores work</a>
+      <a href="#greenwashing">Greenwashing</a>
+      <a href="#about">About</a>
+    </nav>
+    <div class="header-actions">
+      <button class="link-btn" onclick="openLogin(event); setAuthTab('login')">Sign in</button>
+      <button class="btn btn-primary btn-small" onclick="openLogin(event); setAuthTab('signup')">Create account</button>
+    </div>
+  </div>
 </header>
 
-<!-- ── HERO ── -->
-<section class="hero">
-  <div class="hero-content">
-    <h1>Shop smarter.<br>Know the <span class="grad">real</span> impact.</h1>
-    <p class="hero-sub">Point your camera at any product to instantly see its sustainability score. EcoAudit exposes greenwashing, tracks your carbon footprint, and helps you find better alternatives — before you buy.</p>
-    <div class="hero-btns">
-      <button class="btn-demo" onclick="openLogin(event)" style="cursor:pointer;border:none">Get Started →</button>
-    </div>
-    <p class="hero-note">Free forever · No credit card · <a href="privacy.html">Privacy Policy</a></p>
-  </div>
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <p class="eyebrow">Sustainability grades for what you buy</p>
+        <h1>Know what you're <em>really</em> buying.</h1>
+        <p class="hero-lede">Scan a product, search a brand, or import your receipts. EcoAudit grades it A–F on climate, supply chain, labour, materials and packaging, and calls out green claims that don't hold up.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" onclick="openLogin(event); setAuthTab('signup')">Create a free account</button>
+          <a class="btn btn-ghost" href="#how">How scores work</a>
+        </div>
+        <p class="hero-note">Free, no ads. Made by students at Fordham University.</p>
+      </div>
 
-  <div class="hero-visual">
-    <!-- Main audit card -->
-    <div class="float-card card-main">
-      <div class="card-brand-row">
-        <div class="card-brand-icon" style="background:#BF360C">H</div>
+      <figure class="result" aria-label="Example EcoAudit result for H&amp;M Conscious Collection">
+        <div class="result-head">
+          <div>
+            <p class="eyebrow">Example result</p>
+            <p class="result-name">Conscious Collection</p>
+            <p class="result-sub">H&amp;M · Fast fashion</p>
+          </div>
+          <div class="grade">
+            <div class="grade-letter" style="background:var(--grade-d)">D</div>
+            <div class="grade-label">High risk</div>
+          </div>
+        </div>
+        <div class="bars">
+          <div class="bar-row"><span>Climate</span><div class="bar-track"><div class="bar-fill" style="width:30%"></div></div><span class="bar-val">30</span></div>
+          <div class="bar-row"><span>Supply chain</span><div class="bar-track"><div class="bar-fill" style="width:25%"></div></div><span class="bar-val">25</span></div>
+          <div class="bar-row"><span>Labour</span><div class="bar-track"><div class="bar-fill" style="width:35%"></div></div><span class="bar-val">35</span></div>
+          <div class="bar-row"><span>Materials</span><div class="bar-track"><div class="bar-fill" style="width:28%"></div></div><span class="bar-val">28</span></div>
+          <div class="bar-row"><span>Packaging</span><div class="bar-track"><div class="bar-fill" style="width:38%"></div></div><span class="bar-val">38</span></div>
+        </div>
+        <div class="findings">
+          <h4>What we found</h4>
+          <div class="finding"><span class="dot"></span><span>The “Conscious” label was found misleading by Norway's consumer authority and is under EU investigation.</span></div>
+          <div class="finding"><span class="dot"></span><span>Reported emissions rose 6% in 2024 despite its climate pledges.</span></div>
+          <div class="finding"><span class="dot"></span><span>No evidence of living wages across its supply chain.</span></div>
+        </div>
+        <div class="result-foot">
+          <span><span class="tag">Hand-checked</span>&nbsp; Good On You · H&amp;M Sustainability Report</span>
+          <span>Better pick: <strong>Patagonia · A</strong></span>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="block" id="ways">
+    <div class="wrap">
+      <p class="eyebrow">What it does</p>
+      <h2>Three ways to check something before you buy it.</h2>
+      <div class="ways">
+        <div class="way">
+          <span class="num">01</span>
+          <h3>Scan it in the store</h3>
+          <p>Point your phone or laptop camera at a product. EcoAudit identifies it, lets you confirm the match, and returns its grade with the reasons behind it.</p>
+        </div>
+        <div class="way">
+          <span class="num">02</span>
+          <h3>Search a brand</h3>
+          <p>Type any brand to see its scores in each category, the claims that check out, the ones that don't, and lower-impact alternatives.</p>
+        </div>
+        <div class="way">
+          <span class="num">03</span>
+          <h3>Import your receipts</h3>
+          <p>Upload receipts or connect Gmail to pull in past purchases. Your dashboard shows your footprint, where things were made, and how far they travelled.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="how">
+    <div class="wrap">
+      <p class="eyebrow">How scores work</p>
+      <h2>Five categories, one grade, and the sources behind it.</h2>
+      <p class="intro">Every brand gets a 0–100 score in five categories. The overall score is their average, turned into a letter grade.</p>
+      <div class="how-grid">
         <div>
-          <div class="card-brand-name">H&M Conscious Collection</div>
-          <div class="card-brand-type">Fast Fashion · hm.com</div>
+          <div class="scale" aria-label="Grade bands">
+            <div style="background:var(--grade-a)"><b>A</b><span>80–100</span></div>
+            <div style="background:var(--grade-b)"><b>B</b><span>58–79</span></div>
+            <div style="background:var(--grade-c)"><b>C</b><span>35–57</span></div>
+            <div style="background:var(--grade-d)"><b>D</b><span>10–34</span></div>
+            <div style="background:var(--grade-f)"><b>F</b><span>0–9</span></div>
+          </div>
+          <p class="scale-note">Plus and minus grades split each band.</p>
+          <ul class="cats">
+            <li>Climate <span>Emissions, targets, and progress against them</span></li>
+            <li>Supply chain <span>Whether suppliers and factories are disclosed</span></li>
+            <li>Labour <span>Living wages, forced-labour risk, audits</span></li>
+            <li>Materials <span>Recycled, organic, and certified inputs</span></li>
+            <li>Packaging <span>Waste, plastic, and take-back schemes</span></li>
+          </ul>
         </div>
-        <div class="card-grade grade-d">D</div>
-      </div>
-      <div class="card-bar-label">Carbon & Climate</div>
-      <div class="card-bar-wrap"><div class="card-bar-fill" style="width:30%;background:#EF9A9A;height:100%;border-radius:50px"></div></div>
-      <div class="card-bar-label">Labour Standards</div>
-      <div class="card-bar-wrap"><div class="card-bar-fill" style="width:35%;background:#EF9A9A;height:100%;border-radius:50px"></div></div>
-      <div class="card-bar-label">Material Origin</div>
-      <div class="card-bar-wrap"><div class="card-bar-fill" style="width:28%;background:#EF9A9A;height:100%;border-radius:50px"></div></div>
-      <div class="card-tag tag-danger">⚠️ High Greenwash Risk</div>
-    </div>
-
-    <!-- Mini: Patagonia -->
-    <div class="float-card card-mini1">
-      <div class="card-brand-row">
-        <div class="card-brand-icon" style="background:#1B4332">P</div>
-        <div style="flex:1">
-          <div class="card-brand-name" style="font-size:13px">Patagonia</div>
-          <div class="card-brand-type">B Corp 151.4</div>
+        <div>
+          <div class="source">
+            <h3><span class="tag">Hand-checked</span> Brands we've researched</h3>
+            <p>Scores built from B Lab, Good On You, CDP, SBTi, MSCI and the companies' own sustainability reports. Each finding names its source.</p>
+          </div>
+          <div class="source">
+            <h3><span class="tag" style="background:#F3EAD7;color:#6B4E12">AI estimate</span> Everything else</h3>
+            <p>For brands we haven't researched yet, Claude estimates a score from public information. These results are labelled as estimates, so treat them as a starting point, not a verdict.</p>
+          </div>
         </div>
-        <div class="card-grade grade-a">A</div>
-      </div>
-      <div class="card-tag tag-good" style="font-size:10px">✅ Verified Sustainable</div>
-    </div>
-
-    <!-- Mini: Scores list -->
-    <div class="float-card card-mini2">
-      <div class="mini-card-title">Recent Scans</div>
-      <div class="mini-row">
-        <span class="name">Fairphone 5</span>
-        <div class="mini-grade-dot grade-a">A</div>
-      </div>
-      <div class="mini-row">
-        <span class="name">Nike Air Max</span>
-        <div class="mini-grade-dot grade-b" style="background:#E3F2FD;color:#1565C0">C+</div>
-      </div>
-      <div class="mini-row">
-        <span class="name">Zara Join Life</span>
-        <div class="mini-grade-dot grade-d">D</div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ── STATS ── -->
-<div class="stats-bar">
-  <div class="stat-item">
-    <div class="stat-n">200+</div>
-    <div class="stat-label">Brands in database</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-n">12K+</div>
-    <div class="stat-label">Greenwash flags raised</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-n">A–F</div>
-    <div class="stat-label">ESG grade system</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-n">100%</div>
-    <div class="stat-label">Free, always</div>
-  </div>
-</div>
+  <section class="block" id="greenwashing">
+    <div class="wrap">
+      <p class="eyebrow">Greenwashing</p>
+      <h2>Marketing words we don't take at face value.</h2>
+      <p class="intro">When a product leans on a claim without evidence behind it, EcoAudit flags it and tells you what's missing.</p>
+      <div class="claims">
+        <div class="claim"><q>Eco-friendly</q><p>Says nothing measurable. We look for certifications or published data that back it up.</p></div>
+        <div class="claim"><q>Carbon neutral</q><p>Often means offsets, not lower emissions. We check whether emissions are actually falling.</p></div>
+        <div class="claim"><q>Conscious collection</q><p>A small sustainable line can hide the rest of a catalogue. We score the whole brand.</p></div>
+        <div class="claim"><q>Made with recycled materials</q><p>Could be 5% or 95%. We look for the percentage and a certification like GRS or bluesign.</p></div>
+      </div>
+    </div>
+  </section>
 
-<!-- ── FEATURES ── -->
-<section class="features" id="features">
-  <div class="section-label">What EcoAudit does</div>
-  <h2 class="section-title">Every feature you need to<br>shop consciously</h2>
-  <p class="section-sub">From scanning a brand's ESG report to tracking your own footprint and finding more sustainable alternatives.</p>
+  <section class="block" id="about">
+    <div class="wrap about">
+      <div>
+        <p class="eyebrow">About</p>
+        <h2>Built at RamHack, kept free.</h2>
+        <p>EcoAudit won first place in the Environmental track at Fordham University's first RamHack in 2024. It's a student project with no ads and nothing to sell. We keep your data to a minimum. Read our <a href="privacy.html">privacy policy</a>.</p>
+      </div>
+      <button class="btn btn-primary" onclick="openLogin(event); setAuthTab('signup')">Create a free account</button>
+    </div>
+  </section>
+</main>
 
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-title">Camera Product Scanner</div>
-      <div class="feature-desc">Point your camera at any product in-store. AI identifies the item, traces it on screen, and returns an A–F sustainability score with a full breakdown — in seconds.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-title">Greenwash Detection</div>
-      <div class="feature-desc">We flag unverified claims like "eco-friendly", "sustainable cotton", and "carbon neutral" — cross-checked against EU rulings, court cases, and certification databases.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-title">Carbon Footprint Tracker</div>
-      <div class="feature-desc">Uses your location and an estimated carbon footprint from online purchases to show your environmental impact.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-title">ESG Brand Database</div>
-      <div class="feature-desc">Search any brand and see its full scorecard — carbon, labour, materials — graded A–F. Sort by sustainability, filter by category, and see which brands are actually walking the talk.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-title">Browser Extension</div>
-      <div class="feature-desc">Shopping on H&M, Nike, Amazon, Zara? The extension auto-scans the page and shows an eco score badge — before you hit buy.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-title">Impact Dashboard</div>
-      <div class="feature-desc">Track your CO₂ avoided, plastic saved, and money redirected to ethical brands. See your footprint grow or shrink with every scan.</div>
-    </div>
-  </div>
-</section>
-
-<!-- ── HOW IT WORKS ── -->
-<section class="how" id="how">
-  <div class="section-label">Simple as 1-2-3</div>
-  <h2 class="section-title">How EcoAudit works</h2>
-
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-title">Sign in</div>
-      <div class="step-desc">Create a free account to get started.</div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-title">Scan or search</div>
-      <div class="step-desc">Point your camera at a product, type a brand name, or enter it manually. EcoAudit's AI identifies it and surfaces its full ESG record with verified claims and red flags.</div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-title">Make a better choice</div>
-      <div class="step-desc">See real time results of how your purchases impact the environment and how you can reduce that impact.</div>
-    </div>
-  </div>
-</section>
-
-<!-- ── CTA ── -->
-<section class="cta-section">
-  <h2>Ready to shop smarter?</h2>
-  <p>Join thousands of conscious shoppers who've already cut their fashion footprint with EcoAudit.</p>
-  <div class="cta-btns">
-    <button class="btn-demo" onclick="openLogin(event)" style="cursor:pointer;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15)">Create Account →</button>
-  </div>
-</section>
-
-<!-- ── FOOTER ── -->
-<footer>
-  <div class="logo" style="display:flex;align-items:center;gap:8px"><img src="koala-logo.png" alt="" style="width:24px;height:24px;border-radius:5px"> EcoAudit</div>
-  <div>
-    <span>Data sources: B Lab · Good On You · MSCI · Sustainalytics · EcoVadis · CDP</span>
-    <a href="privacy.html">Privacy</a>
-    <a href="#">About</a>
+<footer class="site-footer">
+  <div class="wrap">
+    <a class="brand" href="landing.html" style="font-size:18px"><img src="assets/logo.png" alt="" style="width:24px;height:24px" />EcoAudit</a>
+    <nav aria-label="Footer">
+      <a href="#how">How scores work</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="mailto:ehrlich.miles@gmail.com">Contact</a>
+    </nav>
+    <span>© 2026 EcoAudit</span>
   </div>
 </footer>
 
-<!-- ── AUTH MODAL ── -->
-<div class="modal-overlay" id="loginModal">
+<!-- ── Auth modal ── -->
+<div class="modal-overlay" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal">
-    <button class="modal-close" onclick="closeLogin()">✕</button>
-    <div class="modal-logo"><img src="koala-logo.png" alt="EcoAudit" style="width:48px;height:48px;border-radius:12px;margin-bottom:4px" /></div>
-    <h2 id="modalTitle">Welcome to EcoAudit</h2>
-    <p class="modal-subtitle" id="modalSubtitle">Create an account to save your impact data across devices.</p>
+    <button class="modal-close" onclick="closeLogin()" aria-label="Close">✕</button>
+    <div class="modal-logo"><img src="assets/logo.png" alt="" /></div>
+    <h2 id="modalTitle">Create your account</h2>
+    <p class="modal-subtitle" id="modalSubtitle">Save your scans and footprint across devices.</p>
 
     <div class="modal-tabs">
-      <button class="modal-tab active" data-tab="signup">Create Account</button>
-      <button class="modal-tab" data-tab="login">Sign In</button>
+      <button class="modal-tab active" data-tab="signup">Create account</button>
+      <button class="modal-tab" data-tab="login">Sign in</button>
     </div>
 
     <div class="auth-error" id="authError"></div>
     <div class="auth-success" id="authSuccess"></div>
 
-    <a class="modal-google-btn" href="/api/auth/google/start" id="googleBtn" style="text-decoration:none">
+    <a class="modal-google-btn" href="/api/auth/google/start" id="googleBtn">
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
         <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -553,37 +367,35 @@
     </a>
     <div class="modal-divider">or</div>
 
-    <!-- SIGN UP FORM -->
     <form class="auth-form" id="signupForm">
       <div class="auth-field">
-        <label for="signupName">Full Name</label>
-        <input type="text" id="signupName" name="signupName" autocomplete="name" placeholder="Test User" required />
+        <label for="signupName">Name</label>
+        <input type="text" id="signupName" name="signupName" autocomplete="name" required />
       </div>
       <div class="auth-field">
         <label for="signupEmail">Email</label>
-        <input type="email" id="signupEmail" name="signupEmail" autocomplete="email" placeholder="test@example.com" required />
+        <input type="email" id="signupEmail" name="signupEmail" autocomplete="email" placeholder="you@example.com" required />
       </div>
       <div class="auth-field">
         <label for="signupPassword">Password</label>
         <input type="password" id="signupPassword" name="signupPassword" autocomplete="new-password" placeholder="At least 6 characters" minlength="6" required />
       </div>
-      <button type="submit" class="auth-submit">Create Account</button>
+      <button type="submit" class="auth-submit">Create account</button>
     </form>
 
-    <!-- LOGIN FORM -->
     <form class="auth-form" id="loginForm" style="display:none">
       <div class="auth-field">
         <label for="loginEmail">Email</label>
-        <input type="email" id="loginEmail" name="loginEmail" autocomplete="email" placeholder="test@example.com" required />
+        <input type="email" id="loginEmail" name="loginEmail" autocomplete="email" placeholder="you@example.com" required />
       </div>
       <div class="auth-field">
         <label for="loginPassword">Password</label>
-        <input type="password" id="loginPassword" name="loginPassword" autocomplete="current-password" placeholder="Your password" required />
+        <input type="password" id="loginPassword" name="loginPassword" autocomplete="current-password" required />
       </div>
-      <button type="submit" class="auth-submit">Sign In</button>
+      <button type="submit" class="auth-submit">Sign in</button>
     </form>
 
-    <p class="modal-terms">By continuing you agree to our <a href="privacy.html" target="_blank">Privacy Policy</a>. Your data stays private and is never sold.</p>
+    <p class="modal-terms">By continuing you agree to our <a href="privacy.html" target="_blank">privacy policy</a>.</p>
   </div>
 </div>
 
@@ -636,8 +448,8 @@
     signupForm.querySelectorAll('input, button').forEach(el => { el.disabled = !signup; });
     loginForm.querySelectorAll('input, button').forEach(el => { el.disabled = signup; });
     if (signup) {
-      modalTitle.textContent = 'Welcome to EcoAudit';
-      modalSub.textContent = 'Create an account to save your impact data across devices.';
+      modalTitle.textContent = 'Create your account';
+      modalSub.textContent = 'Save your scans and footprint across devices.';
     } else {
       const se = document.getElementById('signupEmail');
       const sp = document.getElementById('signupPassword');
@@ -646,7 +458,7 @@
       if (le && se && !String(le.value || '').trim() && String(se.value || '').trim()) le.value = se.value.trim();
       if (lp && sp && !String(lp.value || '') && String(sp.value || '')) lp.value = sp.value;
       modalTitle.textContent = 'Welcome back';
-      modalSub.textContent = 'Sign in to access your saved audits and footprint data.';
+      modalSub.textContent = 'Sign in to see your saved scans and footprint.';
     }
   }
 
@@ -752,7 +564,7 @@
         showError(data.error || 'Invalid credentials');
       }
     } catch (err) {
-      showError('Network error — is the app running (e.g. localhost:3000)?');
+      showError('Could not reach EcoAudit. Check your connection and try again.');
     }
   });
 
